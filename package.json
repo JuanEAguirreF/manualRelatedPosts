@@ -1,0 +1,15 @@
+{
+  "name": "manual-related-posts-pro",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Manual Related Posts Pro Gutenberg block plugin",
+  "scripts": {
+    "build": "wp-scripts build",
+    "start": "wp-scripts start",
+    "lint:js": "wp-scripts lint-js src",
+    "format": "wp-scripts format"
+  },
+  "devDependencies": {
+    "@wordpress/scripts": "^30.13.0"
+  }
+}

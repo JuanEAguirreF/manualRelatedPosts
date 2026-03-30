@@ -1,0 +1,1 @@
+/** Placeholder for future selected posts list extraction. */
