@@ -2,7 +2,7 @@
   "$schema": "https://schemas.wp.org/trunk/block.json",
   "apiVersion": 3,
   "name": "manual-related-posts-pro/manual-related-posts",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "title": "Manual Related Posts",
   "category": "widgets",
   "icon": "admin-links",
@@ -21,6 +21,8 @@
     "sectionSubtitle": { "type": "string" },
     "sectionTitleColor": { "type": "string" },
     "sectionTitleSize": { "type": "number" },
+    "sectionTitleMarginBottom": { "type": "number" },
+    "sectionTitleTag": { "type": "string" },
     "sectionTitleWeight": { "type": "string" },
     "sectionTitleAlign": { "type": "string" },
     "sectionSubtitleColor": { "type": "string" },
@@ -45,6 +47,7 @@
     "imageHeight": { "type": "number" },
     "postTitleColor": { "type": "string" },
     "postTitleSize": { "type": "number" },
+    "postTitleMarginBottom": { "type": "number" },
     "postTitleWeight": { "type": "string" },
     "postTitleAlign": { "type": "string" },
     "postTitleClamp": { "type": "number" },
@@ -65,3 +68,4 @@
     "blockAlign": { "type": "string" }
   }
 }
+

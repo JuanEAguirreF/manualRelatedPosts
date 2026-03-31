@@ -18,6 +18,8 @@ class MRP_Helpers {
 			'sectionSubtitle'       => '',
 			'sectionTitleColor'     => '#111827',
 			'sectionTitleSize'      => 28,
+			'sectionTitleMarginBottom' => 0,
+			'sectionTitleTag'       => 'h2',
 			'sectionTitleWeight'    => '700',
 			'sectionTitleAlign'     => 'left',
 			'sectionSubtitleColor'  => '#4b5563',
@@ -42,6 +44,7 @@ class MRP_Helpers {
 			'imageHeight'           => 0,
 			'postTitleColor'        => '#111827',
 			'postTitleSize'         => 20,
+			'postTitleMarginBottom' => 12,
 			'postTitleWeight'       => '700',
 			'postTitleAlign'        => 'left',
 			'postTitleClamp'        => 3,
@@ -59,7 +62,7 @@ class MRP_Helpers {
 			'buttonAlign'           => 'left',
 			'fullCardLink'          => true,
 			'openInNewTab'          => false,
-			'blockAlign'            => 'wide',
+			'blockAlign'            => 'left',
 		);
 	}
 
@@ -69,6 +72,8 @@ class MRP_Helpers {
 			'sectionSubtitle'       => 'string',
 			'sectionTitleColor'     => 'color',
 			'sectionTitleSize'      => 'int',
+			'sectionTitleMarginBottom' => 'int',
+			'sectionTitleTag'       => 'heading_tag',
 			'sectionTitleWeight'    => 'font_weight',
 			'sectionTitleAlign'     => 'align',
 			'sectionSubtitleColor'  => 'color',
@@ -93,6 +98,7 @@ class MRP_Helpers {
 			'imageHeight'           => 'int',
 			'postTitleColor'        => 'color',
 			'postTitleSize'         => 'int',
+			'postTitleMarginBottom' => 'int',
 			'postTitleWeight'       => 'font_weight',
 			'postTitleAlign'        => 'align',
 			'postTitleClamp'        => 'int',
@@ -110,7 +116,7 @@ class MRP_Helpers {
 			'buttonAlign'           => 'align',
 			'fullCardLink'          => 'bool',
 			'openInNewTab'          => 'bool',
-			'blockAlign'            => 'block_align',
+			'blockAlign'            => 'layout_align',
 		);
 	}
 
@@ -192,10 +198,16 @@ class MRP_Helpers {
 			'landscape' => '16 / 9',
 			'portrait'  => '4 / 5',
 		);
-		$vars       = array(
-			'--mrp-columns-mobile'    => absint( $settings['columnsMobile'] ),
-			'--mrp-columns-tablet'    => absint( $settings['columnsTablet'] ),
-			'--mrp-columns-desktop'   => absint( $settings['columnsDesktop'] ),
+		$flex_align_map = array(
+			'left'   => 'flex-start',
+			'center' => 'center',
+			'right'  => 'flex-end',
+		);
+
+		$vars = array(
+			'--mrp-columns-mobile'    => max( 1, absint( $settings['columnsMobile'] ) ),
+			'--mrp-columns-tablet'    => max( 1, absint( $settings['columnsTablet'] ) ),
+			'--mrp-columns-desktop'   => max( 1, absint( $settings['columnsDesktop'] ) ),
 			'--mrp-gap'               => absint( $settings['gap'] ) . 'px',
 			'--mrp-heading-spacing'   => absint( $settings['headingSpacing'] ) . 'px',
 			'--mrp-heading-color'     => $settings['sectionTitleColor'],
@@ -219,13 +231,14 @@ class MRP_Helpers {
 			'--mrp-post-title-size'   => absint( $settings['postTitleSize'] ) . 'px',
 			'--mrp-post-title-weight' => $settings['postTitleWeight'],
 			'--mrp-post-title-align'  => $settings['postTitleAlign'],
-			'--mrp-post-title-clamp'  => absint( $settings['postTitleClamp'] ),
+			'--mrp-post-title-clamp'  => max( 1, absint( $settings['postTitleClamp'] ) ),
 			'--mrp-excerpt-color'     => $settings['excerptColor'],
 			'--mrp-excerpt-size'      => absint( $settings['excerptSize'] ) . 'px',
 			'--mrp-button-text-color' => $settings['buttonTextColor'],
 			'--mrp-button-bg'         => $settings['buttonBackgroundColor'],
 			'--mrp-button-radius'     => absint( $settings['buttonRadius'] ) . 'px',
-			'--mrp-button-align'      => ('center' === $settings['buttonAlign'] ? 'center' : ('right' === $settings['buttonAlign'] ? 'flex-end' : 'flex-start')),
+			'--mrp-button-align'      => $flex_align_map[ $settings['buttonAlign'] ] ?? 'flex-start',
+			'--mrp-grid-justify'      => $flex_align_map[ $settings['blockAlign'] ] ?? 'flex-start',
 		);
 
 		$parts = array();
@@ -274,10 +287,12 @@ class MRP_Helpers {
 				return rest_sanitize_boolean( $value );
 			case 'align':
 				return in_array( $value, array( 'left', 'center', 'right' ), true ) ? $value : $fallback;
-			case 'block_align':
-				return in_array( $value, array( '', 'wide', 'full' ), true ) ? $value : $fallback;
+			case 'layout_align':
+				return in_array( $value, array( 'left', 'center', 'right' ), true ) ? $value : $fallback;
 			case 'font_weight':
 				return in_array( (string) $value, array( '400', '500', '600', '700', '800' ), true ) ? (string) $value : $fallback;
+			case 'heading_tag':
+				return in_array( $value, array( 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'div' ), true ) ? $value : $fallback;
 			case 'shadow':
 				return in_array( $value, array( 'none', 'soft', 'medium', 'strong' ), true ) ? $value : $fallback;
 			case 'image_size':

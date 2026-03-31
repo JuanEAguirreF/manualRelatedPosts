@@ -33,7 +33,7 @@
 
 	function getSetting( attributes, key ) {
 		var value = attributes[ key ];
-		if ( value === undefined || value === null || value === '' || value === 0 ) {
+		if ( value === undefined || value === null || value === '' ) {
 			return DEFAULTS[ key ];
 		}
 		return value;
@@ -201,6 +201,7 @@
 				'--mrp-heading-spacing': getSetting( attributes, 'headingSpacing' ) + 'px',
 				'--mrp-heading-color': getSetting( attributes, 'sectionTitleColor' ),
 				'--mrp-heading-size': getSetting( attributes, 'sectionTitleSize' ) + 'px',
+				'--mrp-heading-title-gap': getSetting( attributes, 'sectionTitleMarginBottom' ) + 'px',
 				'--mrp-heading-weight': getSetting( attributes, 'sectionTitleWeight' ),
 				'--mrp-heading-align': getSetting( attributes, 'sectionTitleAlign' ),
 				'--mrp-subtitle-color': getSetting( attributes, 'sectionSubtitleColor' ),
@@ -211,6 +212,7 @@
 				'--mrp-card-radius': getSetting( attributes, 'cardBorderRadius' ) + 'px',
 				'--mrp-post-title-color': getSetting( attributes, 'postTitleColor' ),
 				'--mrp-post-title-size': getSetting( attributes, 'postTitleSize' ) + 'px',
+				'--mrp-post-title-margin-bottom': getSetting( attributes, 'postTitleMarginBottom' ) + 'px',
 				'--mrp-post-title-weight': getSetting( attributes, 'postTitleWeight' ),
 				'--mrp-excerpt-color': getSetting( attributes, 'excerptColor' ),
 				'--mrp-excerpt-size': getSetting( attributes, 'excerptSize' ) + 'px',
@@ -231,17 +233,21 @@
 					el( PanelBody, { title: __( 'Section Header', 'manual-related-posts-pro' ), initialOpen: false },
 						el( ColorControl, { label: __( 'Title color', 'manual-related-posts-pro' ), value: attributes.sectionTitleColor || '', onChange: function ( value ) { updateOne( setAttributes, 'sectionTitleColor', value ); } } ),
 						el( RangeControl, { label: __( 'Title size', 'manual-related-posts-pro' ), value: attributes.sectionTitleSize || DEFAULTS.sectionTitleSize, onChange: function ( value ) { updateOne( setAttributes, 'sectionTitleSize', value ); }, min: 12, max: 60 } ),
+							el( RangeControl, { label: __( 'Title bottom margin', 'manual-related-posts-pro' ), value: getSetting( attributes, 'sectionTitleMarginBottom' ), onChange: function ( value ) { updateOne( setAttributes, 'sectionTitleMarginBottom', value ); }, min: 0, max: 80 } ),
+						el( SelectControl, { label: __( 'Title tag', 'manual-related-posts-pro' ), value: attributes.sectionTitleTag || DEFAULTS.sectionTitleTag, options: [ { label: 'H1', value: 'h1' }, { label: 'H2', value: 'h2' }, { label: 'H3', value: 'h3' }, { label: 'H4', value: 'h4' }, { label: 'H5', value: 'h5' }, { label: 'H6', value: 'h6' }, { label: 'DIV', value: 'div' } ], onChange: function ( value ) { updateOne( setAttributes, 'sectionTitleTag', value ); } } ),
 						el( SelectControl, { label: __( 'Title weight', 'manual-related-posts-pro' ), value: attributes.sectionTitleWeight || DEFAULTS.sectionTitleWeight, options: [ { label: '400', value: '400' }, { label: '500', value: '500' }, { label: '600', value: '600' }, { label: '700', value: '700' }, { label: '800', value: '800' } ], onChange: function ( value ) { updateOne( setAttributes, 'sectionTitleWeight', value ); } } ),
 						el( SelectControl, { label: __( 'Title alignment', 'manual-related-posts-pro' ), value: attributes.sectionTitleAlign || DEFAULTS.sectionTitleAlign, options: [ { label: __( 'Left', 'manual-related-posts-pro' ), value: 'left' }, { label: __( 'Center', 'manual-related-posts-pro' ), value: 'center' }, { label: __( 'Right', 'manual-related-posts-pro' ), value: 'right' } ], onChange: function ( value ) { updateOne( setAttributes, 'sectionTitleAlign', value ); } } ),
 						el( ColorControl, { label: __( 'Subtitle color', 'manual-related-posts-pro' ), value: attributes.sectionSubtitleColor || '', onChange: function ( value ) { updateOne( setAttributes, 'sectionSubtitleColor', value ); } } ),
 						el( RangeControl, { label: __( 'Subtitle size', 'manual-related-posts-pro' ), value: attributes.sectionSubtitleSize || DEFAULTS.sectionSubtitleSize, onChange: function ( value ) { updateOne( setAttributes, 'sectionSubtitleSize', value ); }, min: 10, max: 40 } ),
+							el( SelectControl, { label: __( 'Subtitle alignment', 'manual-related-posts-pro' ), value: attributes.sectionSubtitleAlign || DEFAULTS.sectionSubtitleAlign, options: [ { label: __( 'Left', 'manual-related-posts-pro' ), value: 'left' }, { label: __( 'Center', 'manual-related-posts-pro' ), value: 'center' }, { label: __( 'Right', 'manual-related-posts-pro' ), value: 'right' } ], onChange: function ( value ) { updateOne( setAttributes, 'sectionSubtitleAlign', value ); } } ),
 						el( RangeControl, { label: __( 'Spacing below heading', 'manual-related-posts-pro' ), value: attributes.headingSpacing || DEFAULTS.headingSpacing, onChange: function ( value ) { updateOne( setAttributes, 'headingSpacing', value ); }, min: 0, max: 60 } )
 					),
 					el( PanelBody, { title: __( 'Layout', 'manual-related-posts-pro' ), initialOpen: false },
 						el( RangeControl, { label: __( 'Desktop columns', 'manual-related-posts-pro' ), value: attributes.columnsDesktop || DEFAULTS.columnsDesktop, onChange: function ( value ) { updateOne( setAttributes, 'columnsDesktop', value ); }, min: 1, max: 6 } ),
 						el( RangeControl, { label: __( 'Tablet columns', 'manual-related-posts-pro' ), value: attributes.columnsTablet || DEFAULTS.columnsTablet, onChange: function ( value ) { updateOne( setAttributes, 'columnsTablet', value ); }, min: 1, max: 4 } ),
 						el( RangeControl, { label: __( 'Mobile columns', 'manual-related-posts-pro' ), value: attributes.columnsMobile || DEFAULTS.columnsMobile, onChange: function ( value ) { updateOne( setAttributes, 'columnsMobile', value ); }, min: 1, max: 2 } ),
-						el( RangeControl, { label: __( 'Gap', 'manual-related-posts-pro' ), value: attributes.gap || DEFAULTS.gap, onChange: function ( value ) { updateOne( setAttributes, 'gap', value ); }, min: 0, max: 60 } )
+						el( RangeControl, { label: __( 'Gap', 'manual-related-posts-pro' ), value: attributes.gap || DEFAULTS.gap, onChange: function ( value ) { updateOne( setAttributes, 'gap', value ); }, min: 0, max: 60 } ),
+							el( SelectControl, { label: __( 'Incomplete row alignment', 'manual-related-posts-pro' ), value: attributes.blockAlign || DEFAULTS.blockAlign, options: [ { label: __( 'Left', 'manual-related-posts-pro' ), value: 'left' }, { label: __( 'Center', 'manual-related-posts-pro' ), value: 'center' }, { label: __( 'Right', 'manual-related-posts-pro' ), value: 'right' } ], onChange: function ( value ) { updateOne( setAttributes, 'blockAlign', value ); } } )
 					),
 					el( PanelBody, { title: __( 'Card', 'manual-related-posts-pro' ), initialOpen: false },
 						el( ColorControl, { label: __( 'Background color', 'manual-related-posts-pro' ), value: attributes.cardBackgroundColor || '', onChange: function ( value ) { updateOne( setAttributes, 'cardBackgroundColor', value ); } } ),
@@ -249,19 +255,23 @@
 						el( RangeControl, { label: __( 'Border width', 'manual-related-posts-pro' ), value: attributes.cardBorderWidth || DEFAULTS.cardBorderWidth, onChange: function ( value ) { updateOne( setAttributes, 'cardBorderWidth', value ); }, min: 0, max: 8 } ),
 						el( RangeControl, { label: __( 'Border radius', 'manual-related-posts-pro' ), value: attributes.cardBorderRadius || DEFAULTS.cardBorderRadius, onChange: function ( value ) { updateOne( setAttributes, 'cardBorderRadius', value ); }, min: 0, max: 40 } ),
 						el( RangeControl, { label: __( 'Padding', 'manual-related-posts-pro' ), value: attributes.cardPadding || DEFAULTS.cardPadding, onChange: function ( value ) { updateOne( setAttributes, 'cardPadding', value ); }, min: 0, max: 48 } ),
-						el( SelectControl, { label: __( 'Shadow', 'manual-related-posts-pro' ), value: attributes.cardShadow || DEFAULTS.cardShadow, options: [ { label: __( 'None', 'manual-related-posts-pro' ), value: 'none' }, { label: __( 'Soft', 'manual-related-posts-pro' ), value: 'soft' }, { label: __( 'Medium', 'manual-related-posts-pro' ), value: 'medium' }, { label: __( 'Strong', 'manual-related-posts-pro' ), value: 'strong' } ], onChange: function ( value ) { updateOne( setAttributes, 'cardShadow', value ); } } )
+						el( SelectControl, { label: __( 'Shadow', 'manual-related-posts-pro' ), value: attributes.cardShadow || DEFAULTS.cardShadow, options: [ { label: __( 'None', 'manual-related-posts-pro' ), value: 'none' }, { label: __( 'Soft', 'manual-related-posts-pro' ), value: 'soft' }, { label: __( 'Medium', 'manual-related-posts-pro' ), value: 'medium' }, { label: __( 'Strong', 'manual-related-posts-pro' ), value: 'strong' } ], onChange: function ( value ) { updateOne( setAttributes, 'cardShadow', value ); } } ),
+							el( SelectControl, { label: __( 'Content alignment', 'manual-related-posts-pro' ), value: attributes.cardContentAlign || DEFAULTS.cardContentAlign, options: [ { label: __( 'Left', 'manual-related-posts-pro' ), value: 'left' }, { label: __( 'Center', 'manual-related-posts-pro' ), value: 'center' }, { label: __( 'Right', 'manual-related-posts-pro' ), value: 'right' } ], onChange: function ( value ) { updateOne( setAttributes, 'cardContentAlign', value ); } } )
 					),
 					el( PanelBody, { title: __( 'Image', 'manual-related-posts-pro' ), initialOpen: false },
 						el( ToggleControl, { label: __( 'Show featured image', 'manual-related-posts-pro' ), checked: !! getSetting( attributes, 'showImage' ), onChange: function ( value ) { updateOne( setAttributes, 'showImage', value ); } } ),
 						el( SelectControl, { label: __( 'Image size', 'manual-related-posts-pro' ), value: attributes.imageSize || DEFAULTS.imageSize, options: [ { label: __( 'Thumbnail', 'manual-related-posts-pro' ), value: 'thumbnail' }, { label: __( 'Medium', 'manual-related-posts-pro' ), value: 'medium' }, { label: __( 'Large', 'manual-related-posts-pro' ), value: 'large' }, { label: __( 'Full', 'manual-related-posts-pro' ), value: 'full' } ], onChange: function ( value ) { updateOne( setAttributes, 'imageSize', value ); } } ),
 						el( SelectControl, { label: __( 'Image ratio', 'manual-related-posts-pro' ), value: attributes.imageRatio || DEFAULTS.imageRatio, options: [ { label: __( 'Auto', 'manual-related-posts-pro' ), value: 'auto' }, { label: __( 'Square', 'manual-related-posts-pro' ), value: 'square' }, { label: __( 'Landscape', 'manual-related-posts-pro' ), value: 'landscape' }, { label: __( 'Portrait', 'manual-related-posts-pro' ), value: 'portrait' } ], onChange: function ( value ) { updateOne( setAttributes, 'imageRatio', value ); } } ),
-						el( RangeControl, { label: __( 'Image corner radius', 'manual-related-posts-pro' ), value: attributes.imageRadius || DEFAULTS.imageRadius, onChange: function ( value ) { updateOne( setAttributes, 'imageRadius', value ); }, min: 0, max: 40 } )
+						el( RangeControl, { label: __( 'Image corner radius', 'manual-related-posts-pro' ), value: attributes.imageRadius || DEFAULTS.imageRadius, onChange: function ( value ) { updateOne( setAttributes, 'imageRadius', value ); }, min: 0, max: 40 } ),
+							el( RangeControl, { label: __( 'Fixed image height', 'manual-related-posts-pro' ), value: attributes.imageHeight || DEFAULTS.imageHeight, onChange: function ( value ) { updateOne( setAttributes, 'imageHeight', value ); }, min: 0, max: 800 } )
 					),
 					el( PanelBody, { title: __( 'Post Title', 'manual-related-posts-pro' ), initialOpen: false },
 						el( ColorControl, { label: __( 'Title color', 'manual-related-posts-pro' ), value: attributes.postTitleColor || '', onChange: function ( value ) { updateOne( setAttributes, 'postTitleColor', value ); } } ),
 						el( RangeControl, { label: __( 'Title size', 'manual-related-posts-pro' ), value: attributes.postTitleSize || DEFAULTS.postTitleSize, onChange: function ( value ) { updateOne( setAttributes, 'postTitleSize', value ); }, min: 12, max: 40 } ),
+							el( RangeControl, { label: __( 'Title bottom margin', 'manual-related-posts-pro' ), value: getSetting( attributes, 'postTitleMarginBottom' ), onChange: function ( value ) { updateOne( setAttributes, 'postTitleMarginBottom', value ); }, min: 0, max: 80 } ),
 						el( SelectControl, { label: __( 'Title weight', 'manual-related-posts-pro' ), value: attributes.postTitleWeight || DEFAULTS.postTitleWeight, options: [ { label: '400', value: '400' }, { label: '500', value: '500' }, { label: '600', value: '600' }, { label: '700', value: '700' }, { label: '800', value: '800' } ], onChange: function ( value ) { updateOne( setAttributes, 'postTitleWeight', value ); } } ),
-						el( RangeControl, { label: __( 'Title line clamp', 'manual-related-posts-pro' ), value: attributes.postTitleClamp || DEFAULTS.postTitleClamp, onChange: function ( value ) { updateOne( setAttributes, 'postTitleClamp', value ); }, min: 1, max: 5 } )
+						el( SelectControl, { label: __( 'Title alignment', 'manual-related-posts-pro' ), value: attributes.postTitleAlign || DEFAULTS.postTitleAlign, options: [ { label: __( 'Left', 'manual-related-posts-pro' ), value: 'left' }, { label: __( 'Center', 'manual-related-posts-pro' ), value: 'center' }, { label: __( 'Right', 'manual-related-posts-pro' ), value: 'right' } ], onChange: function ( value ) { updateOne( setAttributes, 'postTitleAlign', value ); } } ),
+							el( RangeControl, { label: __( 'Title line clamp', 'manual-related-posts-pro' ), value: attributes.postTitleClamp || DEFAULTS.postTitleClamp, onChange: function ( value ) { updateOne( setAttributes, 'postTitleClamp', value ); }, min: 1, max: 5 } )
 					),
 					el( PanelBody, { title: __( 'Excerpt / Meta', 'manual-related-posts-pro' ), initialOpen: false },
 						el( RangeControl, { label: __( 'Excerpt length', 'manual-related-posts-pro' ), value: attributes.excerptLength || DEFAULTS.excerptLength, onChange: function ( value ) { updateOne( setAttributes, 'excerptLength', value ); }, min: 5, max: 60 } ),
@@ -273,7 +283,8 @@
 						el( TextControl, { label: __( 'Button text', 'manual-related-posts-pro' ), value: attributes.buttonText || '', onChange: function ( value ) { updateOne( setAttributes, 'buttonText', value ); } } ),
 						el( ColorControl, { label: __( 'Button text color', 'manual-related-posts-pro' ), value: attributes.buttonTextColor || '', onChange: function ( value ) { updateOne( setAttributes, 'buttonTextColor', value ); } } ),
 						el( ColorControl, { label: __( 'Button background color', 'manual-related-posts-pro' ), value: attributes.buttonBackgroundColor || '', onChange: function ( value ) { updateOne( setAttributes, 'buttonBackgroundColor', value ); } } ),
-						el( RangeControl, { label: __( 'Button radius', 'manual-related-posts-pro' ), value: attributes.buttonRadius || DEFAULTS.buttonRadius, onChange: function ( value ) { updateOne( setAttributes, 'buttonRadius', value ); }, min: 0, max: 999 } )
+						el( RangeControl, { label: __( 'Button radius', 'manual-related-posts-pro' ), value: attributes.buttonRadius || DEFAULTS.buttonRadius, onChange: function ( value ) { updateOne( setAttributes, 'buttonRadius', value ); }, min: 0, max: 999 } ),
+							el( SelectControl, { label: __( 'Button alignment', 'manual-related-posts-pro' ), value: attributes.buttonAlign || DEFAULTS.buttonAlign, options: [ { label: __( 'Left', 'manual-related-posts-pro' ), value: 'left' }, { label: __( 'Center', 'manual-related-posts-pro' ), value: 'center' }, { label: __( 'Right', 'manual-related-posts-pro' ), value: 'right' } ], onChange: function ( value ) { updateOne( setAttributes, 'buttonAlign', value ); } } )
 					),
 					el( PanelBody, { title: __( 'Advanced', 'manual-related-posts-pro' ), initialOpen: false },
 						el( ToggleControl, { label: __( 'Make entire card clickable', 'manual-related-posts-pro' ), checked: !! getSetting( attributes, 'fullCardLink' ), onChange: function ( value ) { updateOne( setAttributes, 'fullCardLink', value ); } } ),
@@ -290,7 +301,7 @@
 					),
 					el( 'div', { className: 'mrp-editor-preview', style: previewStyle },
 						el( 'div', { className: 'mrp-block-header' },
-							el( 'h2', { className: 'mrp-block-heading' }, attributes.sectionTitle || DEFAULTS.sectionTitle ),
+							el( attributes.sectionTitleTag || DEFAULTS.sectionTitleTag || 'h2', { className: 'mrp-block-heading' }, attributes.sectionTitle || DEFAULTS.sectionTitle ),
 							( attributes.sectionSubtitle || DEFAULTS.sectionSubtitle ) ? el( 'p', { className: 'mrp-block-subtitle' }, attributes.sectionSubtitle || DEFAULTS.sectionSubtitle ) : null
 						),
 						el( SelectedPosts, { posts: posts, onMove: movePost, onRemove: removePost } )
@@ -303,3 +314,5 @@
 		}
 	} );
 } )( window.wp.blocks, window.wp.blockEditor, window.wp.components, window.wp.element, window.wp.i18n, window.wp.apiFetch );
+
+

@@ -4,7 +4,7 @@ Tags: related posts, gutenberg, block, editor, cards
 Requires at least: 6.4
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.0.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -56,12 +56,15 @@ No. The frontend is server-rendered in PHP and uses only lightweight CSS.
 
 == Changelog ==
 
-= 1.0.0 =
+= 1.0.3 =
 
 * Initial release.
 
 == Upgrade Notice ==
 
-= 1.0.0 =
+= 1.0.3 =
 
-Initial release of Manual Related Posts Pro.
+Fixed title margin controls so 0 values are respected in editor and frontend.
+
+
+

@@ -10,7 +10,7 @@
 }
 
 .mrp-block-heading {
-  margin: 0;
+  margin: 0 0 var(--mrp-heading-title-gap, 0px);
   color: var(--mrp-heading-color, #111827);
   font-size: var(--mrp-heading-size, 28px);
   font-weight: var(--mrp-heading-weight, 700);
@@ -26,8 +26,10 @@
 }
 
 .mrp-grid {
-  display: grid;
-  grid-template-columns: repeat(var(--mrp-columns-mobile, 1), minmax(0, 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  justify-content: var(--mrp-grid-justify, flex-start);
   gap: var(--mrp-gap, 24px);
 }
 
@@ -37,16 +39,24 @@
   flex-direction: column;
   overflow: hidden;
   min-width: 0;
+  width: calc((100% - ((var(--mrp-columns-mobile, 1) - 1) * var(--mrp-gap, 24px))) / var(--mrp-columns-mobile, 1));
+  flex: 0 0 calc((100% - ((var(--mrp-columns-mobile, 1) - 1) * var(--mrp-gap, 24px))) / var(--mrp-columns-mobile, 1));
+  max-width: calc((100% - ((var(--mrp-columns-mobile, 1) - 1) * var(--mrp-gap, 24px))) / var(--mrp-columns-mobile, 1));
   background: var(--mrp-card-bg, #fff);
   border: var(--mrp-card-border-width, 1px) solid var(--mrp-card-border-color, #e5e7eb);
   border-radius: var(--mrp-card-radius, 16px);
   box-shadow: var(--mrp-card-shadow, 0 12px 28px rgba(17, 24, 39, 0.08));
 }
 
+.mrp-card.is-clickable {
+  cursor: pointer;
+}
+
 .mrp-card-link-overlay {
   position: absolute;
   inset: 0;
-  z-index: 1;
+  display: block;
+  z-index: 2;
 }
 
 .mrp-card-image,
@@ -65,13 +75,18 @@
 }
 
 .mrp-card-body {
-  position: relative;
-  z-index: 2;
   display: flex;
   flex: 1;
   flex-direction: column;
   padding: var(--mrp-card-padding, 20px);
   text-align: var(--mrp-card-text-align, left);
+}
+
+.mrp-card-image a,
+.mrp-card-title a,
+.mrp-card-button {
+  position: relative;
+  z-index: 3;
 }
 
 .mrp-card-meta {
@@ -84,7 +99,7 @@
 }
 
 .mrp-card-title {
-  margin: 0 0 12px;
+  margin: 0 0 var(--mrp-post-title-margin-bottom, 12px);
   color: var(--mrp-post-title-color, #111827);
   font-size: var(--mrp-post-title-size, 20px);
   font-weight: var(--mrp-post-title-weight, 700);
@@ -125,8 +140,6 @@
 }
 
 .mrp-card-button {
-  position: relative;
-  z-index: 2;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -139,13 +152,17 @@
 }
 
 @media (min-width: 782px) {
-  .mrp-grid {
-    grid-template-columns: repeat(var(--mrp-columns-tablet, 2), minmax(0, 1fr));
+  .mrp-card {
+    width: calc((100% - ((var(--mrp-columns-tablet, 2) - 1) * var(--mrp-gap, 24px))) / var(--mrp-columns-tablet, 2));
+    flex-basis: calc((100% - ((var(--mrp-columns-tablet, 2) - 1) * var(--mrp-gap, 24px))) / var(--mrp-columns-tablet, 2));
+    max-width: calc((100% - ((var(--mrp-columns-tablet, 2) - 1) * var(--mrp-gap, 24px))) / var(--mrp-columns-tablet, 2));
   }
 }
 
 @media (min-width: 1080px) {
-  .mrp-grid {
-    grid-template-columns: repeat(var(--mrp-columns-desktop, 3), minmax(0, 1fr));
+  .mrp-card {
+    width: calc((100% - ((var(--mrp-columns-desktop, 3) - 1) * var(--mrp-gap, 24px))) / var(--mrp-columns-desktop, 3));
+    flex-basis: calc((100% - ((var(--mrp-columns-desktop, 3) - 1) * var(--mrp-gap, 24px))) / var(--mrp-columns-desktop, 3));
+    max-width: calc((100% - ((var(--mrp-columns-desktop, 3) - 1) * var(--mrp-gap, 24px))) / var(--mrp-columns-desktop, 3));
   }
 }

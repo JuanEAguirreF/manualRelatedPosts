@@ -54,6 +54,7 @@ class MRP_Block {
 		}
 
 		wp_enqueue_style( 'wp-color-picker' );
+		wp_enqueue_style( 'mrp-admin-settings', MRP_PLUGIN_URL . 'assets/css/admin-settings.css', array( 'wp-color-picker' ), MRP_VERSION );
 		wp_enqueue_script( 'wp-color-picker' );
 		wp_add_inline_script( 'wp-color-picker', 'jQuery(function($){$(".mrp-color-field").wpColorPicker();});' );
 	}

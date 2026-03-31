@@ -42,6 +42,7 @@ class MRP_Render {
 			'style' => MRP_Helpers::build_wrapper_style( $settings ),
 		);
 		$link_target        = ! empty( $settings['openInNewTab'] ) ? ' target="_blank" rel="noopener noreferrer"' : '';
+		$heading_tag        = in_array( $settings['sectionTitleTag'], array( 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'div' ), true ) ? $settings['sectionTitleTag'] : 'h2';
 
 		ob_start();
 		?>
@@ -49,7 +50,7 @@ class MRP_Render {
 			<?php if ( ! empty( $settings['sectionTitle'] ) || ! empty( $settings['sectionSubtitle'] ) ) : ?>
 				<header class="mrp-block-header">
 					<?php if ( ! empty( $settings['sectionTitle'] ) ) : ?>
-						<h2 class="mrp-block-heading"><?php echo esc_html( $settings['sectionTitle'] ); ?></h2>
+						<?php printf( '<%1$s class="mrp-block-heading">%2$s</%1$s>', esc_html( $heading_tag ), esc_html( $settings['sectionTitle'] ) ); ?>
 					<?php endif; ?>
 					<?php if ( ! empty( $settings['sectionSubtitle'] ) ) : ?>
 						<p class="mrp-block-subtitle"><?php echo esc_html( $settings['sectionSubtitle'] ); ?></p>
