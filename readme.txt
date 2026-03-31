@@ -4,7 +4,7 @@ Tags: related posts, gutenberg, block, editor, cards
 Requires at least: 6.4
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 1.0.3
+Stable tag: 1.0.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -56,15 +56,18 @@ No. The frontend is server-rendered in PHP and uses only lightweight CSS.
 
 == Changelog ==
 
-= 1.0.3 =
+= 1.0.6 =
 
 * Initial release.
 
 == Upgrade Notice ==
 
-= 1.0.3 =
+= 1.0.6 =
 
-Fixed title margin controls so 0 values are respected in editor and frontend.
+Refined settings grouping with a dedicated Meta Defaults section and clearer admin organization.
+
+
+
 
 
 

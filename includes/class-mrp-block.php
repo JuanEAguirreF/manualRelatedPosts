@@ -54,8 +54,10 @@ class MRP_Block {
 		}
 
 		wp_enqueue_style( 'wp-color-picker' );
-		wp_enqueue_style( 'mrp-admin-settings', MRP_PLUGIN_URL . 'assets/css/admin-settings.css', array( 'wp-color-picker' ), MRP_VERSION );
+		wp_enqueue_style( 'mrp-style' );
+		wp_enqueue_style( 'mrp-admin-settings', MRP_PLUGIN_URL . 'assets/css/admin-settings.css', array( 'wp-color-picker', 'mrp-style' ), MRP_VERSION );
 		wp_enqueue_script( 'wp-color-picker' );
+		wp_enqueue_script( 'mrp-admin-preview', MRP_PLUGIN_URL . 'assets/js/admin-settings-preview.js', array( 'jquery', 'wp-color-picker' ), MRP_VERSION, true );
 		wp_add_inline_script( 'wp-color-picker', 'jQuery(function($){$(".mrp-color-field").wpColorPicker();});' );
 	}
 

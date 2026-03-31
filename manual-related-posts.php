@@ -3,7 +3,7 @@
  * Plugin Name: Manual Related Posts Pro
  * Plugin URI: https://juan.webmasterpersonal.com
  * Description: Adds a lightweight Gutenberg block for manually selected related posts with dynamic server-side rendering.
- * Version: 1.0.3
+ * Version: 1.0.6
  * Requires at least: 6.4
  * Requires PHP: 7.4
  * Author: Juan Aguirre
@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'MRP_VERSION', '1.0.3' );
+define( 'MRP_VERSION', '1.0.6' );
 define( 'MRP_PLUGIN_FILE', __FILE__ );
 define( 'MRP_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'MRP_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
@@ -55,6 +55,9 @@ function mrp_add_plugin_action_links( $links ) {
 }
 
 add_filter( 'plugin_action_links_' . plugin_basename( MRP_PLUGIN_FILE ), 'mrp_add_plugin_action_links' );
+
+
+
 
 
 

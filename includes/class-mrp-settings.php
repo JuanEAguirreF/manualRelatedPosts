@@ -12,27 +12,39 @@ if ( ! defined( 'ABSPATH' ) ) {
 class MRP_Settings {
 	public static function get_sections() {
 		return array(
-			'mrp_section_content'    => array(
+			'mrp_section_content'          => array(
 				'title'       => __( 'Content Defaults', 'manual-related-posts-pro' ),
 				'description' => __( 'Choose the default text, metadata and visibility behavior for the related posts section.', 'manual-related-posts-pro' ),
 			),
-			'mrp_section_layout'     => array(
+			'mrp_section_layout'           => array(
 				'title'       => __( 'Layout Defaults', 'manual-related-posts-pro' ),
 				'description' => __( 'Set the responsive structure and alignment used by new blocks before any per-block overrides.', 'manual-related-posts-pro' ),
 			),
-			'mrp_section_card'       => array(
+			'mrp_section_card'             => array(
 				'title'       => __( 'Card Defaults', 'manual-related-posts-pro' ),
 				'description' => __( 'Control the visual treatment of each related post card.', 'manual-related-posts-pro' ),
 			),
-			'mrp_section_image'      => array(
+			'mrp_section_image'            => array(
 				'title'       => __( 'Image Defaults', 'manual-related-posts-pro' ),
 				'description' => __( 'Define how featured images appear across the card grid.', 'manual-related-posts-pro' ),
 			),
-			'mrp_section_typography' => array(
-				'title'       => __( 'Typography, Excerpt & Button Defaults', 'manual-related-posts-pro' ),
-				'description' => __( 'Tune heading semantics, text styles, excerpt styles and button appearance.', 'manual-related-posts-pro' ),
+			'mrp_section_header_typography' => array(
+				'title'       => __( 'Section Header Defaults', 'manual-related-posts-pro' ),
+				'description' => __( 'Tune the section title, subtitle, tag, alignment and spacing.', 'manual-related-posts-pro' ),
 			),
-			'mrp_section_advanced'   => array(
+			'mrp_section_post_title'       => array(
+				'title'       => __( 'Post Title Defaults', 'manual-related-posts-pro' ),
+				'description' => __( 'Control the size, alignment, weight and spacing of each card title.', 'manual-related-posts-pro' ),
+			),
+			'mrp_section_meta'             => array(
+				'title'       => __( 'Meta Defaults', 'manual-related-posts-pro' ),
+				'description' => __( 'Configure whether cards show publication date and categories by default.', 'manual-related-posts-pro' ),
+			),
+			'mrp_section_excerpt_button'   => array(
+				'title'       => __( 'Excerpt & Button Defaults', 'manual-related-posts-pro' ),
+				'description' => __( 'Configure excerpt typography and read more button appearance separately from the headings.', 'manual-related-posts-pro' ),
+			),
+			'mrp_section_advanced'         => array(
 				'title'       => __( 'Advanced Defaults', 'manual-related-posts-pro' ),
 				'description' => __( 'Define link behavior and card interaction defaults for new blocks.', 'manual-related-posts-pro' ),
 			),
@@ -100,30 +112,27 @@ class MRP_Settings {
 				</div>
 			</div>
 
+			<div class="mrp-admin-topbar">
+				<div class="mrp-admin-topbar__card">
+					<strong><?php esc_html_e( 'How defaults work', 'manual-related-posts-pro' ); ?></strong>
+					<span><?php esc_html_e( 'Block-level value overrides the global default, and the global default overrides the internal fallback.', 'manual-related-posts-pro' ); ?></span>
+				</div>
+				<nav class="mrp-admin-topnav" aria-label="<?php esc_attr_e( 'Settings sections', 'manual-related-posts-pro' ); ?>">
+					<?php foreach ( $sections as $section_id => $section ) : ?>
+						<a href="#<?php echo esc_attr( $section_id ); ?>"><?php echo esc_html( $section['title'] ); ?></a>
+					<?php endforeach; ?>
+				</nav>
+			</div>
+
 			<form action="options.php" method="post" class="mrp-admin-layout">
 				<?php settings_fields( 'mrp_settings_group' ); ?>
 
-				<aside class="mrp-admin-sidebar">
-					<div class="mrp-admin-sidebar__card">
-						<h2><?php esc_html_e( 'Sections', 'manual-related-posts-pro' ); ?></h2>
-						<nav class="mrp-admin-nav" aria-label="<?php esc_attr_e( 'Settings sections', 'manual-related-posts-pro' ); ?>">
-							<?php foreach ( $sections as $section_id => $section ) : ?>
-								<a href="#<?php echo esc_attr( $section_id ); ?>"><?php echo esc_html( $section['title'] ); ?></a>
-							<?php endforeach; ?>
-						</nav>
-					</div>
-
-					<div class="mrp-admin-sidebar__card">
-						<h2><?php esc_html_e( 'How defaults work', 'manual-related-posts-pro' ); ?></h2>
-						<ol>
-							<li><?php esc_html_e( 'Block-level value', 'manual-related-posts-pro' ); ?></li>
-							<li><?php esc_html_e( 'Plugin global default', 'manual-related-posts-pro' ); ?></li>
-							<li><?php esc_html_e( 'Internal fallback', 'manual-related-posts-pro' ); ?></li>
-						</ol>
-					</div>
-				</aside>
-
 				<div class="mrp-admin-content">
+					<div class="mrp-admin-preview-notice">
+						<strong><?php esc_html_e( 'Live preview', 'manual-related-posts-pro' ); ?></strong>
+						<span><?php esc_html_e( 'Adjust the defaults and watch this demo update in real time. It is only a preview for wp-admin, not extra frontend weight.', 'manual-related-posts-pro' ); ?></span>
+					</div>
+
 					<?php foreach ( $sections as $section_id => $section ) : ?>
 						<section id="<?php echo esc_attr( $section_id ); ?>" class="mrp-settings-card">
 							<header class="mrp-settings-card__header">
@@ -152,7 +161,79 @@ class MRP_Settings {
 						<?php submit_button( __( 'Save Global Defaults', 'manual-related-posts-pro' ), 'primary', 'submit', false ); ?>
 					</div>
 				</div>
+
+				<aside class="mrp-admin-preview-column">
+					<div class="mrp-admin-preview-shell">
+						<div class="mrp-admin-preview-shell__header">
+							<div>
+								<h2><?php esc_html_e( 'Front-End Demo', 'manual-related-posts-pro' ); ?></h2>
+								<p><?php esc_html_e( 'A representative preview of how your defaults will look on the site.', 'manual-related-posts-pro' ); ?></p>
+							</div>
+							<div class="mrp-admin-preview-controls">
+								<label>
+									<span><?php esc_html_e( 'Preview width', 'manual-related-posts-pro' ); ?></span>
+									<select id="mrp-preview-width-control">
+										<option value="320"><?php esc_html_e( 'Compact', 'manual-related-posts-pro' ); ?></option>
+										<option value="420" selected><?php esc_html_e( 'Comfort', 'manual-related-posts-pro' ); ?></option>
+										<option value="540"><?php esc_html_e( 'Wide', 'manual-related-posts-pro' ); ?></option>
+									</select>
+								</label>
+								<label>
+									<span><?php esc_html_e( 'Cards shown', 'manual-related-posts-pro' ); ?></span>
+									<select id="mrp-preview-cards-control">
+										<option value="1" selected>1</option>
+										<option value="2">2</option>
+										<option value="3">3</option>
+										<option value="4">4</option>
+									</select>
+								</label>
+							</div>
+						</div>
+						<?php self::render_preview_markup(); ?>
+					</div>
+				</aside>
 			</form>
+		</div>
+		<?php
+	}
+
+	private static function render_preview_markup() {
+		$settings      = MRP_Helpers::resolve_settings( array() );
+		$heading_tag   = in_array( $settings['sectionTitleTag'], array( 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'div' ), true ) ? $settings['sectionTitleTag'] : 'h2';
+		$wrapper_style = MRP_Helpers::build_wrapper_style( $settings );
+		?>
+		<div class="mrp-admin-preview-device">
+			<div class="mrp-admin-preview-canvas" style="--mrp-preview-frame-width:420px;">
+				<section class="mrp-block-wrapper mrp-admin-preview-block" style="<?php echo esc_attr( $wrapper_style ); ?>">
+					<header class="mrp-block-header">
+						<?php printf( '<%1$s class="mrp-block-heading" data-mrp-preview="sectionTitle">%2$s</%1$s>', esc_html( $heading_tag ), esc_html( $settings['sectionTitle'] ) ); ?>
+						<p class="mrp-block-subtitle" data-mrp-preview="sectionSubtitle"><?php echo esc_html( $settings['sectionSubtitle'] ? $settings['sectionSubtitle'] : __( 'Optional subtitle text can reinforce the section context.', 'manual-related-posts-pro' ) ); ?></p>
+					</header>
+					<div class="mrp-grid" role="list">
+						<?php for ( $index = 1; $index <= 4; $index++ ) : ?>
+							<article class="mrp-card is-clickable" role="listitem" data-mrp-preview-card="<?php echo esc_attr( (string) $index ); ?>">
+								<a class="mrp-card-link-overlay" href="#" aria-hidden="true" tabindex="-1"></a>
+								<div class="mrp-card-image" data-mrp-preview-image-wrap>
+									<div class="mrp-admin-preview-placeholder" data-mrp-preview-image>
+										<span><?php esc_html_e( 'Featured Image', 'manual-related-posts-pro' ); ?></span>
+									</div>
+								</div>
+								<div class="mrp-card-body">
+									<div class="mrp-card-meta" data-mrp-preview="metaWrap">
+										<time datetime="2026-03-31" data-mrp-preview="date"><?php esc_html_e( 'March 31, 2026', 'manual-related-posts-pro' ); ?></time>
+										<span data-mrp-preview="category"><?php esc_html_e( 'Guides', 'manual-related-posts-pro' ); ?></span>
+									</div>
+									<h3 class="mrp-card-title" data-mrp-preview="postTitle"><?php echo esc_html( sprintf( __( 'Example related post %d', 'manual-related-posts-pro' ), $index ) ); ?></h3>
+									<p class="mrp-card-excerpt" data-mrp-preview="excerpt"><?php esc_html_e( 'This preview card updates as you change typography, spacing, colors, image behavior and button settings in the global defaults.', 'manual-related-posts-pro' ); ?></p>
+									<div class="mrp-card-actions" data-mrp-preview="buttonWrap">
+										<a class="mrp-card-button" href="#" data-mrp-preview="buttonText"><?php echo esc_html( $settings['buttonText'] ); ?></a>
+									</div>
+								</div>
+							</article>
+						<?php endfor; ?>
+					</div>
+				</section>
+			</div>
 		</div>
 		<?php
 	}
@@ -220,10 +301,10 @@ class MRP_Settings {
 		return array(
 			array( 'key' => 'sectionTitle', 'label' => __( 'Default section title', 'manual-related-posts-pro' ), 'type' => 'text', 'section' => 'mrp_section_content', 'description' => __( 'Appears when a block does not define its own section title.', 'manual-related-posts-pro' ) ),
 			array( 'key' => 'sectionSubtitle', 'label' => __( 'Default section subtitle', 'manual-related-posts-pro' ), 'type' => 'text', 'section' => 'mrp_section_content', 'description' => __( 'Helpful for optional context beneath the main section heading.', 'manual-related-posts-pro' ) ),
-			array( 'key' => 'showExcerpt', 'label' => __( 'Show excerpt by default', 'manual-related-posts-pro' ), 'type' => 'checkbox', 'section' => 'mrp_section_content', 'description' => __( 'Enable excerpts for new blocks unless the editor overrides them.', 'manual-related-posts-pro' ) ),
-			array( 'key' => 'showDate', 'label' => __( 'Show date by default', 'manual-related-posts-pro' ), 'type' => 'checkbox', 'section' => 'mrp_section_content', 'description' => __( 'Controls whether new blocks display the post date unless overridden.', 'manual-related-posts-pro' ) ),
-			array( 'key' => 'showCategory', 'label' => __( 'Show category by default', 'manual-related-posts-pro' ), 'type' => 'checkbox', 'section' => 'mrp_section_content', 'description' => __( 'Controls whether new blocks display categories unless overridden.', 'manual-related-posts-pro' ) ),
-			array( 'key' => 'excerptLength', 'label' => __( 'Excerpt length', 'manual-related-posts-pro' ), 'type' => 'number', 'section' => 'mrp_section_content', 'min' => 5, 'max' => 60, 'description' => __( 'Approximate word count used when no manual excerpt is available.', 'manual-related-posts-pro' ) ),
+			array( 'key' => 'showDate', 'label' => __( 'Show date by default', 'manual-related-posts-pro' ), 'type' => 'checkbox', 'section' => 'mrp_section_meta', 'description' => __( 'Controls whether new blocks display the post date unless overridden.', 'manual-related-posts-pro' ) ),
+			array( 'key' => 'showCategory', 'label' => __( 'Show category by default', 'manual-related-posts-pro' ), 'type' => 'checkbox', 'section' => 'mrp_section_meta', 'description' => __( 'Controls whether new blocks display categories unless overridden.', 'manual-related-posts-pro' ) ),
+			array( 'key' => 'showExcerpt', 'label' => __( 'Show excerpt by default', 'manual-related-posts-pro' ), 'type' => 'checkbox', 'section' => 'mrp_section_excerpt_button', 'description' => __( 'Enable excerpts for new blocks unless the editor overrides them.', 'manual-related-posts-pro' ) ),
+			array( 'key' => 'excerptLength', 'label' => __( 'Excerpt length', 'manual-related-posts-pro' ), 'type' => 'number', 'section' => 'mrp_section_excerpt_button', 'min' => 5, 'max' => 60, 'description' => __( 'Approximate word count used when no manual excerpt is available.', 'manual-related-posts-pro' ) ),
 			array( 'key' => 'columnsDesktop', 'label' => __( 'Desktop columns', 'manual-related-posts-pro' ), 'type' => 'number', 'section' => 'mrp_section_layout', 'min' => 1, 'max' => 6, 'description' => __( 'How many cards to show per row on large screens.', 'manual-related-posts-pro' ) ),
 			array( 'key' => 'columnsTablet', 'label' => __( 'Tablet columns', 'manual-related-posts-pro' ), 'type' => 'number', 'section' => 'mrp_section_layout', 'min' => 1, 'max' => 4, 'description' => __( 'Used for medium breakpoints and tablet layouts.', 'manual-related-posts-pro' ) ),
 			array( 'key' => 'columnsMobile', 'label' => __( 'Mobile columns', 'manual-related-posts-pro' ), 'type' => 'number', 'section' => 'mrp_section_layout', 'min' => 1, 'max' => 2, 'description' => __( 'Usually one column for readability on phones.', 'manual-related-posts-pro' ) ),
@@ -241,32 +322,35 @@ class MRP_Settings {
 			array( 'key' => 'imageRatio', 'label' => __( 'Image aspect ratio', 'manual-related-posts-pro' ), 'type' => 'select', 'section' => 'mrp_section_image', 'options' => array( 'auto' => __( 'Auto', 'manual-related-posts-pro' ), 'square' => __( 'Square', 'manual-related-posts-pro' ), 'landscape' => __( 'Landscape', 'manual-related-posts-pro' ), 'portrait' => __( 'Portrait', 'manual-related-posts-pro' ) ) ),
 			array( 'key' => 'imageRadius', 'label' => __( 'Image corner radius', 'manual-related-posts-pro' ), 'type' => 'number', 'section' => 'mrp_section_image', 'min' => 0, 'max' => 48 ),
 			array( 'key' => 'imageHeight', 'label' => __( 'Fixed image height (px)', 'manual-related-posts-pro' ), 'type' => 'number', 'section' => 'mrp_section_image', 'min' => 0, 'max' => 800, 'description' => __( 'Leave 0 to use the natural height implied by the aspect ratio.', 'manual-related-posts-pro' ) ),
-			array( 'key' => 'sectionTitleColor', 'label' => __( 'Section title color', 'manual-related-posts-pro' ), 'type' => 'color', 'section' => 'mrp_section_typography' ),
-			array( 'key' => 'sectionTitleSize', 'label' => __( 'Section title size', 'manual-related-posts-pro' ), 'type' => 'number', 'section' => 'mrp_section_typography', 'min' => 12, 'max' => 60 ),
-			array( 'key' => 'sectionTitleMarginBottom', 'label' => __( 'Section title bottom margin', 'manual-related-posts-pro' ), 'type' => 'number', 'section' => 'mrp_section_typography', 'min' => 0, 'max' => 80 ),
-			array( 'key' => 'sectionTitleTag', 'label' => __( 'Section title HTML tag', 'manual-related-posts-pro' ), 'type' => 'select', 'section' => 'mrp_section_typography', 'options' => array( 'h1' => 'H1', 'h2' => 'H2', 'h3' => 'H3', 'h4' => 'H4', 'h5' => 'H5', 'h6' => 'H6', 'div' => 'DIV' ) ),
-			array( 'key' => 'sectionTitleWeight', 'label' => __( 'Section title weight', 'manual-related-posts-pro' ), 'type' => 'select', 'section' => 'mrp_section_typography', 'options' => array( '400' => '400', '500' => '500', '600' => '600', '700' => '700', '800' => '800' ) ),
-			array( 'key' => 'sectionTitleAlign', 'label' => __( 'Section title alignment', 'manual-related-posts-pro' ), 'type' => 'select', 'section' => 'mrp_section_typography', 'options' => array( 'left' => __( 'Left', 'manual-related-posts-pro' ), 'center' => __( 'Center', 'manual-related-posts-pro' ), 'right' => __( 'Right', 'manual-related-posts-pro' ) ) ),
-			array( 'key' => 'sectionSubtitleColor', 'label' => __( 'Section subtitle color', 'manual-related-posts-pro' ), 'type' => 'color', 'section' => 'mrp_section_typography' ),
-			array( 'key' => 'sectionSubtitleSize', 'label' => __( 'Section subtitle size', 'manual-related-posts-pro' ), 'type' => 'number', 'section' => 'mrp_section_typography', 'min' => 10, 'max' => 40 ),
-			array( 'key' => 'sectionSubtitleAlign', 'label' => __( 'Section subtitle alignment', 'manual-related-posts-pro' ), 'type' => 'select', 'section' => 'mrp_section_typography', 'options' => array( 'left' => __( 'Left', 'manual-related-posts-pro' ), 'center' => __( 'Center', 'manual-related-posts-pro' ), 'right' => __( 'Right', 'manual-related-posts-pro' ) ) ),
-			array( 'key' => 'headingSpacing', 'label' => __( 'Spacing below heading (px)', 'manual-related-posts-pro' ), 'type' => 'number', 'section' => 'mrp_section_typography', 'min' => 0, 'max' => 80 ),
-			array( 'key' => 'postTitleColor', 'label' => __( 'Card post title color', 'manual-related-posts-pro' ), 'type' => 'color', 'section' => 'mrp_section_typography' ),
-			array( 'key' => 'postTitleSize', 'label' => __( 'Card post title size', 'manual-related-posts-pro' ), 'type' => 'number', 'section' => 'mrp_section_typography', 'min' => 12, 'max' => 48 ),
-			array( 'key' => 'postTitleMarginBottom', 'label' => __( 'Card post title bottom margin', 'manual-related-posts-pro' ), 'type' => 'number', 'section' => 'mrp_section_typography', 'min' => 0, 'max' => 80 ),
-			array( 'key' => 'postTitleWeight', 'label' => __( 'Card post title weight', 'manual-related-posts-pro' ), 'type' => 'select', 'section' => 'mrp_section_typography', 'options' => array( '400' => '400', '500' => '500', '600' => '600', '700' => '700', '800' => '800' ) ),
-			array( 'key' => 'postTitleAlign', 'label' => __( 'Card post title alignment', 'manual-related-posts-pro' ), 'type' => 'select', 'section' => 'mrp_section_typography', 'options' => array( 'left' => __( 'Left', 'manual-related-posts-pro' ), 'center' => __( 'Center', 'manual-related-posts-pro' ), 'right' => __( 'Right', 'manual-related-posts-pro' ) ) ),
-			array( 'key' => 'postTitleClamp', 'label' => __( 'Card post title line clamp', 'manual-related-posts-pro' ), 'type' => 'number', 'section' => 'mrp_section_typography', 'min' => 1, 'max' => 6 ),
-			array( 'key' => 'excerptColor', 'label' => __( 'Excerpt color', 'manual-related-posts-pro' ), 'type' => 'color', 'section' => 'mrp_section_typography' ),
-			array( 'key' => 'excerptSize', 'label' => __( 'Excerpt size', 'manual-related-posts-pro' ), 'type' => 'number', 'section' => 'mrp_section_typography', 'min' => 10, 'max' => 28 ),
-			array( 'key' => 'showButton', 'label' => __( 'Show button by default', 'manual-related-posts-pro' ), 'type' => 'checkbox', 'section' => 'mrp_section_typography', 'description' => __( 'Controls whether new blocks display the read more button unless overridden.', 'manual-related-posts-pro' ) ),
-			array( 'key' => 'buttonText', 'label' => __( 'Default button text', 'manual-related-posts-pro' ), 'type' => 'text', 'section' => 'mrp_section_typography' ),
-			array( 'key' => 'buttonTextColor', 'label' => __( 'Button text color', 'manual-related-posts-pro' ), 'type' => 'color', 'section' => 'mrp_section_typography' ),
-			array( 'key' => 'buttonBackgroundColor', 'label' => __( 'Button background color', 'manual-related-posts-pro' ), 'type' => 'color', 'section' => 'mrp_section_typography' ),
-			array( 'key' => 'buttonRadius', 'label' => __( 'Button radius', 'manual-related-posts-pro' ), 'type' => 'number', 'section' => 'mrp_section_typography', 'min' => 0, 'max' => 999 ),
-			array( 'key' => 'buttonAlign', 'label' => __( 'Button alignment', 'manual-related-posts-pro' ), 'type' => 'select', 'section' => 'mrp_section_typography', 'options' => array( 'left' => __( 'Left', 'manual-related-posts-pro' ), 'center' => __( 'Center', 'manual-related-posts-pro' ), 'right' => __( 'Right', 'manual-related-posts-pro' ) ) ),
+			array( 'key' => 'sectionTitleColor', 'label' => __( 'Section title color', 'manual-related-posts-pro' ), 'type' => 'color', 'section' => 'mrp_section_header_typography' ),
+			array( 'key' => 'sectionTitleSize', 'label' => __( 'Section title size', 'manual-related-posts-pro' ), 'type' => 'number', 'section' => 'mrp_section_header_typography', 'min' => 12, 'max' => 60 ),
+			array( 'key' => 'sectionTitleMarginBottom', 'label' => __( 'Section title bottom margin', 'manual-related-posts-pro' ), 'type' => 'number', 'section' => 'mrp_section_header_typography', 'min' => 0, 'max' => 80 ),
+			array( 'key' => 'sectionTitleTag', 'label' => __( 'Section title HTML tag', 'manual-related-posts-pro' ), 'type' => 'select', 'section' => 'mrp_section_header_typography', 'options' => array( 'h1' => 'H1', 'h2' => 'H2', 'h3' => 'H3', 'h4' => 'H4', 'h5' => 'H5', 'h6' => 'H6', 'div' => 'DIV' ) ),
+			array( 'key' => 'sectionTitleWeight', 'label' => __( 'Section title weight', 'manual-related-posts-pro' ), 'type' => 'select', 'section' => 'mrp_section_header_typography', 'options' => array( '400' => '400', '500' => '500', '600' => '600', '700' => '700', '800' => '800' ) ),
+			array( 'key' => 'sectionTitleAlign', 'label' => __( 'Section title alignment', 'manual-related-posts-pro' ), 'type' => 'select', 'section' => 'mrp_section_header_typography', 'options' => array( 'left' => __( 'Left', 'manual-related-posts-pro' ), 'center' => __( 'Center', 'manual-related-posts-pro' ), 'right' => __( 'Right', 'manual-related-posts-pro' ) ) ),
+			array( 'key' => 'sectionSubtitleColor', 'label' => __( 'Section subtitle color', 'manual-related-posts-pro' ), 'type' => 'color', 'section' => 'mrp_section_header_typography' ),
+			array( 'key' => 'sectionSubtitleSize', 'label' => __( 'Section subtitle size', 'manual-related-posts-pro' ), 'type' => 'number', 'section' => 'mrp_section_header_typography', 'min' => 10, 'max' => 40 ),
+			array( 'key' => 'sectionSubtitleAlign', 'label' => __( 'Section subtitle alignment', 'manual-related-posts-pro' ), 'type' => 'select', 'section' => 'mrp_section_header_typography', 'options' => array( 'left' => __( 'Left', 'manual-related-posts-pro' ), 'center' => __( 'Center', 'manual-related-posts-pro' ), 'right' => __( 'Right', 'manual-related-posts-pro' ) ) ),
+			array( 'key' => 'headingSpacing', 'label' => __( 'Spacing below heading (px)', 'manual-related-posts-pro' ), 'type' => 'number', 'section' => 'mrp_section_header_typography', 'min' => 0, 'max' => 80 ),
+			array( 'key' => 'postTitleColor', 'label' => __( 'Card post title color', 'manual-related-posts-pro' ), 'type' => 'color', 'section' => 'mrp_section_post_title' ),
+			array( 'key' => 'postTitleSize', 'label' => __( 'Card post title size', 'manual-related-posts-pro' ), 'type' => 'number', 'section' => 'mrp_section_post_title', 'min' => 12, 'max' => 48 ),
+			array( 'key' => 'postTitleMarginBottom', 'label' => __( 'Card post title bottom margin', 'manual-related-posts-pro' ), 'type' => 'number', 'section' => 'mrp_section_post_title', 'min' => 0, 'max' => 80 ),
+			array( 'key' => 'postTitleWeight', 'label' => __( 'Card post title weight', 'manual-related-posts-pro' ), 'type' => 'select', 'section' => 'mrp_section_post_title', 'options' => array( '400' => '400', '500' => '500', '600' => '600', '700' => '700', '800' => '800' ) ),
+			array( 'key' => 'postTitleAlign', 'label' => __( 'Card post title alignment', 'manual-related-posts-pro' ), 'type' => 'select', 'section' => 'mrp_section_post_title', 'options' => array( 'left' => __( 'Left', 'manual-related-posts-pro' ), 'center' => __( 'Center', 'manual-related-posts-pro' ), 'right' => __( 'Right', 'manual-related-posts-pro' ) ) ),
+			array( 'key' => 'postTitleClamp', 'label' => __( 'Card post title line clamp', 'manual-related-posts-pro' ), 'type' => 'number', 'section' => 'mrp_section_post_title', 'min' => 1, 'max' => 6 ),
+			array( 'key' => 'excerptColor', 'label' => __( 'Excerpt color', 'manual-related-posts-pro' ), 'type' => 'color', 'section' => 'mrp_section_excerpt_button' ),
+			array( 'key' => 'excerptSize', 'label' => __( 'Excerpt size', 'manual-related-posts-pro' ), 'type' => 'number', 'section' => 'mrp_section_excerpt_button', 'min' => 10, 'max' => 28 ),
+			array( 'key' => 'showButton', 'label' => __( 'Show button by default', 'manual-related-posts-pro' ), 'type' => 'checkbox', 'section' => 'mrp_section_excerpt_button', 'description' => __( 'Controls whether new blocks display the read more button unless overridden.', 'manual-related-posts-pro' ) ),
+			array( 'key' => 'buttonText', 'label' => __( 'Default button text', 'manual-related-posts-pro' ), 'type' => 'text', 'section' => 'mrp_section_excerpt_button' ),
+			array( 'key' => 'buttonTextColor', 'label' => __( 'Button text color', 'manual-related-posts-pro' ), 'type' => 'color', 'section' => 'mrp_section_excerpt_button' ),
+			array( 'key' => 'buttonBackgroundColor', 'label' => __( 'Button background color', 'manual-related-posts-pro' ), 'type' => 'color', 'section' => 'mrp_section_excerpt_button' ),
+			array( 'key' => 'buttonRadius', 'label' => __( 'Button radius', 'manual-related-posts-pro' ), 'type' => 'number', 'section' => 'mrp_section_excerpt_button', 'min' => 0, 'max' => 999 ),
+			array( 'key' => 'buttonAlign', 'label' => __( 'Button alignment', 'manual-related-posts-pro' ), 'type' => 'select', 'section' => 'mrp_section_excerpt_button', 'options' => array( 'left' => __( 'Left', 'manual-related-posts-pro' ), 'center' => __( 'Center', 'manual-related-posts-pro' ), 'right' => __( 'Right', 'manual-related-posts-pro' ) ) ),
 			array( 'key' => 'fullCardLink', 'label' => __( 'Make entire card clickable by default', 'manual-related-posts-pro' ), 'type' => 'checkbox', 'section' => 'mrp_section_advanced', 'description' => __( 'Adds a full-card overlay link while preserving the optional button.', 'manual-related-posts-pro' ) ),
 			array( 'key' => 'openInNewTab', 'label' => __( 'Open links in new tab by default', 'manual-related-posts-pro' ), 'type' => 'checkbox', 'section' => 'mrp_section_advanced' ),
 		);
 	}
 }
+
+
+
