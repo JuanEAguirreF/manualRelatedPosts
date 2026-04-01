@@ -4,7 +4,7 @@ Tags: related posts, gutenberg, block, editor, cards
 Requires at least: 6.4
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 1.0.6
+Stable tag: 1.0.8
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -56,15 +56,16 @@ No. The frontend is server-rendered in PHP and uses only lightweight CSS.
 
 == Changelog ==
 
-= 1.0.6 =
+= 1.0.8 =
 
-* Initial release.
+* Switched the wp-admin preview image to a Picsum placeholder.
+* Expanded the preview column so the live demo has more room in the settings screen.
 
 == Upgrade Notice ==
 
-= 1.0.6 =
+= 1.0.8 =
 
-Refined settings grouping with a dedicated Meta Defaults section and clearer admin organization.
+Refines the wp-admin preview with a better placeholder image and a wider demo column.
 
 
 

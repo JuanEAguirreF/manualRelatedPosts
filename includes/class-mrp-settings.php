@@ -214,9 +214,13 @@ class MRP_Settings {
 							<article class="mrp-card is-clickable" role="listitem" data-mrp-preview-card="<?php echo esc_attr( (string) $index ); ?>">
 								<a class="mrp-card-link-overlay" href="#" aria-hidden="true" tabindex="-1"></a>
 								<div class="mrp-card-image" data-mrp-preview-image-wrap>
-									<div class="mrp-admin-preview-placeholder" data-mrp-preview-image>
-										<span><?php esc_html_e( 'Featured Image', 'manual-related-posts-pro' ); ?></span>
-									</div>
+									<img
+										src="https://picsum.photos/id/1060/1200/675"
+										alt="<?php esc_attr_e( 'Preview featured image', 'manual-related-posts-pro' ); ?>"
+										loading="eager"
+										decoding="async"
+										data-mrp-preview-image
+									/>
 								</div>
 								<div class="mrp-card-body">
 									<div class="mrp-card-meta" data-mrp-preview="metaWrap">

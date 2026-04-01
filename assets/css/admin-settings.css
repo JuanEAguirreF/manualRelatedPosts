@@ -110,7 +110,7 @@
 
 .mrp-admin-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 460px;
+  grid-template-columns: minmax(0, 1fr) minmax(520px, 620px);
   gap: 24px;
   align-items: start;
 }
@@ -279,26 +279,14 @@
   min-height: 100%;
 }
 
-.mrp-admin-preview-placeholder {
-  display: grid;
-  place-items: center;
-  width: 100%;
-  min-height: 180px;
-  background:
-    radial-gradient(circle at top left, rgba(15, 118, 110, 0.18), transparent 34%),
-    linear-gradient(135deg, #d8f0ed 0%, #edf6ff 52%, #f8fbff 100%);
-  color: #0f172a;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-}
-
 .mrp-admin-preview-block .mrp-grid {
   justify-content: var(--mrp-grid-justify, flex-start);
 }
 
 .mrp-admin-preview-block .mrp-card {
+  width: calc((100% - ((var(--mrp-preview-columns, 1) - 1) * var(--mrp-gap, 24px))) / var(--mrp-preview-columns, 1));
+  flex-basis: calc((100% - ((var(--mrp-preview-columns, 1) - 1) * var(--mrp-gap, 24px))) / var(--mrp-preview-columns, 1));
+  max-width: calc((100% - ((var(--mrp-preview-columns, 1) - 1) * var(--mrp-gap, 24px))) / var(--mrp-preview-columns, 1));
   transition: all 160ms ease;
 }
 

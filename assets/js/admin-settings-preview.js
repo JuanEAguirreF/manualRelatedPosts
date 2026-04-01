@@ -99,6 +99,16 @@
 		canvas.style.setProperty('--mrp-preview-frame-width', width + 'px');
 	}
 
+	function resolvePreviewColumns(width, mobile, tablet, desktop) {
+		if (width >= 1080) {
+			return desktop;
+		}
+		if (width >= 782) {
+			return tablet;
+		}
+		return mobile;
+	}
+
 	function updatePreview() {
 		var preview = document.querySelector('.mrp-admin-preview-block');
 		if (!preview) {
@@ -132,10 +142,18 @@
 		var metaWrapList = document.querySelectorAll('[data-mrp-preview="metaWrap"]');
 		var buttonTextList = document.querySelectorAll('[data-mrp-preview="buttonText"]');
 		var titleNodeList = document.querySelectorAll('[data-mrp-preview="postTitle"]');
+		var previewWidth = parseInt(previewWidthControl ? previewWidthControl.value : '420', 10);
+		var previewColumns = resolvePreviewColumns(
+			previewWidth,
+			parseInt(columnsMobile, 10),
+			parseInt(columnsTablet, 10),
+			parseInt(columnsDesktop, 10)
+		);
 
 		setStyleVar(preview, '--mrp-columns-mobile', columnsMobile);
 		setStyleVar(preview, '--mrp-columns-tablet', columnsTablet);
 		setStyleVar(preview, '--mrp-columns-desktop', columnsDesktop);
+		setStyleVar(preview, '--mrp-preview-columns', previewColumns);
 		setStyleVar(preview, '--mrp-gap', gap + 'px');
 		setStyleVar(preview, '--mrp-grid-justify', buildFlexAlign(getValue('blockAlign', 'left')));
 		setStyleVar(preview, '--mrp-heading-spacing', getValue('headingSpacing', '20') + 'px');
@@ -211,7 +229,7 @@
 			toggleVisibility(overlay, fullCardLink);
 		});
 
-		updatePreviewFrameWidth(parseInt(previewWidthControl ? previewWidthControl.value : '420', 10));
+		updatePreviewFrameWidth(previewWidth);
 		updatePreviewCards(parseInt(previewCardsControl ? previewCardsControl.value : '1', 10));
 	}
 
