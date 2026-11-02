@@ -1,6 +1,7 @@
 <?php
 /**
- * Dynamic block rendering.
+ * Dynamic block rendering for Manual Related Posts Pro.
+ * Handles Classic, Same Series, and Related Content modes.
  *
  * @package ManualRelatedPostsPro
  */
@@ -10,21 +11,73 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class MRP_Render {
-	public static function render_block( $attributes ) {
-		$attributes   = MRP_Helpers::sanitize_block_attributes( $attributes );
-		$selected_ids = $attributes['selectedPosts'] ?? array();
 
-		if ( empty( $selected_ids ) ) {
+	/**
+	 * Render callback for the Gutenberg block.
+	 *
+	 * @param array $attributes Block attributes.
+	 * @return string Rendered HTML.
+	 */
+	public static function render_block( $attributes ) {
+		$attributes = MRP_Helpers::sanitize_block_attributes( $attributes );
+		$mode       = $attributes['mode'] ?? 'classic';
+		$current_id = get_the_ID();
+		$posts      = array();
+
+		if ( 'series' === $mode ) {
+			// In Same Series mode, always fetch live group members.
+			$series = $current_id ? MRP_Series::get_post_series( $current_id ) : null;
+			if ( $series ) {
+				$posts = MRP_Series::get_series_posts( $series->term_id, $current_id );
+			}
+
+			// If not yet assigned or during block editor preview, fallback to selectedPosts.
+			if ( empty( $posts ) && ! empty( $attributes['selectedPosts'] ) ) {
+				$fallback_ids = array_diff( $attributes['selectedPosts'], $current_id ? array( $current_id ) : array() );
+				$posts        = self::get_posts_by_ids( $fallback_ids );
+			}
+		} elseif ( 'spinoff' === $mode ) {
+			// In Related Content mode, fetch independent spin-offs.
+			if ( $current_id ) {
+				$posts = MRP_Relationships::get_related_posts( $current_id );
+			}
+			if ( empty( $posts ) && ! empty( $attributes['selectedPosts'] ) ) {
+				$fallback_ids = array_diff( $attributes['selectedPosts'], $current_id ? array( $current_id ) : array() );
+				$posts        = self::get_posts_by_ids( $fallback_ids );
+			}
+		} else {
+			// Classic mode: exactly the original selected posts behavior.
+			$selected_ids = $attributes['selectedPosts'] ?? array();
+			if ( ! empty( $selected_ids ) ) {
+				$posts = self::get_posts_by_ids( $selected_ids );
+			}
+		}
+
+		if ( empty( $posts ) ) {
 			return '';
 		}
 
-		$settings = MRP_Helpers::resolve_settings( $attributes );
-		$posts    = get_posts(
+		return self::render_posts_list( $posts, $attributes );
+	}
+
+	/**
+	 * Retrieve published posts by IDs preserving order.
+	 *
+	 * @param int[] $ids Post IDs.
+	 * @return WP_Post[]
+	 */
+	public static function get_posts_by_ids( array $ids ) {
+		$sanitized_ids = array_values( array_unique( array_filter( array_map( 'absint', $ids ) ) ) );
+		if ( empty( $sanitized_ids ) ) {
+			return array();
+		}
+
+		return get_posts(
 			array(
 				'post_type'              => MRP_Helpers::get_allowed_post_types(),
-				'post__in'               => $selected_ids,
+				'post__in'               => $sanitized_ids,
 				'orderby'                => 'post__in',
-				'posts_per_page'         => count( $selected_ids ),
+				'posts_per_page'         => count( $sanitized_ids ),
 				'post_status'            => 'publish',
 				'ignore_sticky_posts'    => true,
 				'no_found_rows'          => true,
@@ -32,13 +85,23 @@ class MRP_Render {
 				'update_post_term_cache' => false,
 			)
 		);
+	}
 
+	/**
+	 * Render a responsive grid of post cards.
+	 *
+	 * @param WP_Post[] $posts      List of posts to display.
+	 * @param array     $attributes Block/render attributes.
+	 * @return string HTML output.
+	 */
+	public static function render_posts_list( array $posts, array $attributes ) {
 		if ( empty( $posts ) ) {
 			return '';
 		}
 
+		$settings           = MRP_Helpers::resolve_settings( $attributes );
 		$wrapper_attributes = array(
-			'class' => 'mrp-block-wrapper',
+			'class' => 'mrp-block-wrapper mrp-mode-' . sanitize_html_class( $settings['mode'] ?? 'classic' ),
 			'style' => MRP_Helpers::build_wrapper_style( $settings ),
 		);
 		$link_target        = ! empty( $settings['openInNewTab'] ) ? ' target="_blank" rel="noopener noreferrer"' : '';

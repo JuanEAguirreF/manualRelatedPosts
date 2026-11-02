@@ -2,11 +2,11 @@
   "$schema": "https://schemas.wp.org/trunk/block.json",
   "apiVersion": 3,
   "name": "manual-related-posts-pro/manual-related-posts",
-  "version": "1.0.8",
+  "version": "2.0.0",
   "title": "Manual Related Posts",
   "category": "widgets",
   "icon": "admin-links",
-  "description": "Display manually selected posts in a responsive card grid.",
+  "description": "Display manually selected posts, chapter series, or spin-offs in a responsive card grid.",
   "textdomain": "manual-related-posts-pro",
   "editorScript": "mrp-editor-script",
   "style": "mrp-style",
@@ -15,7 +15,13 @@
     "html": false,
     "align": ["wide", "full"]
   },
+  "usesContext": ["postId", "postType"],
   "attributes": {
+    "mode": { "type": "string", "default": "classic" },
+    "episodeNumber": { "type": "string", "default": "" },
+    "seriesTitle": { "type": "string", "default": "" },
+    "isReciprocal": { "type": "boolean", "default": false },
+    "relinkConfirmed": { "type": "boolean", "default": false },
     "selectedPosts": { "type": "array", "default": [] },
     "sectionTitle": { "type": "string" },
     "sectionSubtitle": { "type": "string" },
@@ -68,7 +74,3 @@
     "blockAlign": { "type": "string" }
   }
 }
-
-
-
-

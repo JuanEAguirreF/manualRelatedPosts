@@ -78,3 +78,19 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+.mrp-series-settings,
+.mrp-spinoff-settings {
+  display: grid;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.mrp-conflict-warning {
+  border-left: 3px solid #d97706;
+  padding: 8px 12px;
+  background: #fef3c7;
+  border-radius: 6px;
+  margin-bottom: 12px;
+}

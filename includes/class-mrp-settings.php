@@ -12,6 +12,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 class MRP_Settings {
 	public static function get_sections() {
 		return array(
+			'mrp_section_series'           => array(
+				'title'       => __( 'Series & Auto-Render Defaults', 'manual-related-posts-pro' ),
+				'description' => __( 'Configure automatic episode card insertion for posts belonging to a series without requiring a manual block.', 'manual-related-posts-pro' ),
+			),
 			'mrp_section_content'          => array(
 				'title'       => __( 'Content Defaults', 'manual-related-posts-pro' ),
 				'description' => __( 'Choose the default text, metadata and visibility behavior for the related posts section.', 'manual-related-posts-pro' ),
@@ -144,8 +148,8 @@ class MRP_Settings {
 									<?php if ( $field['section'] !== $section_id ) : ?>
 										<?php continue; ?>
 									<?php endif; ?>
-									<div class="mrp-setting-field mrp-setting-field--<?php echo esc_attr( $field['type'] ); ?>">
-										<label class="mrp-setting-field__label" for="<?php echo esc_attr( 'mrp-setting-' . $field['key'] ); ?>">
+									<div class="mrp-setting-field">
+										<label for="<?php echo esc_attr( 'mrp-setting-' . $field['key'] ); ?>" class="mrp-setting-field__label">
 											<?php echo esc_html( $field['label'] ); ?>
 										</label>
 										<div class="mrp-setting-field__control">
@@ -158,86 +162,17 @@ class MRP_Settings {
 					<?php endforeach; ?>
 
 					<div class="mrp-admin-actions">
-						<?php submit_button( __( 'Save Global Defaults', 'manual-related-posts-pro' ), 'primary', 'submit', false ); ?>
+						<?php submit_button( __( 'Save Changes', 'manual-related-posts-pro' ), 'primary large' ); ?>
 					</div>
 				</div>
 
-				<aside class="mrp-admin-preview-column">
-					<div class="mrp-admin-preview-shell">
-						<div class="mrp-admin-preview-shell__header">
-							<div>
-								<h2><?php esc_html_e( 'Front-End Demo', 'manual-related-posts-pro' ); ?></h2>
-								<p><?php esc_html_e( 'A representative preview of how your defaults will look on the site.', 'manual-related-posts-pro' ); ?></p>
-							</div>
-							<div class="mrp-admin-preview-controls">
-								<label>
-									<span><?php esc_html_e( 'Preview width', 'manual-related-posts-pro' ); ?></span>
-									<select id="mrp-preview-width-control">
-										<option value="320"><?php esc_html_e( 'Compact', 'manual-related-posts-pro' ); ?></option>
-										<option value="420" selected><?php esc_html_e( 'Comfort', 'manual-related-posts-pro' ); ?></option>
-										<option value="540"><?php esc_html_e( 'Wide', 'manual-related-posts-pro' ); ?></option>
-									</select>
-								</label>
-								<label>
-									<span><?php esc_html_e( 'Cards shown', 'manual-related-posts-pro' ); ?></span>
-									<select id="mrp-preview-cards-control">
-										<option value="1" selected>1</option>
-										<option value="2">2</option>
-										<option value="3">3</option>
-										<option value="4">4</option>
-									</select>
-								</label>
-							</div>
-						</div>
-						<?php self::render_preview_markup(); ?>
+				<aside class="mrp-admin-sidebar">
+					<div class="mrp-admin-sidebar__card">
+						<h3><?php esc_html_e( 'Settings Preview', 'manual-related-posts-pro' ); ?></h3>
+						<p><?php esc_html_e( 'Live render of your configured styles before saving.', 'manual-related-posts-pro' ); ?></p>
 					</div>
 				</aside>
 			</form>
-		</div>
-		<?php
-	}
-
-	private static function render_preview_markup() {
-		$settings      = MRP_Helpers::resolve_settings( array() );
-		$heading_tag   = in_array( $settings['sectionTitleTag'], array( 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'div' ), true ) ? $settings['sectionTitleTag'] : 'h2';
-		$wrapper_style = MRP_Helpers::build_wrapper_style( $settings );
-		?>
-		<div class="mrp-admin-preview-device">
-			<div class="mrp-admin-preview-canvas" style="--mrp-preview-frame-width:420px;">
-				<section class="mrp-block-wrapper mrp-admin-preview-block" style="<?php echo esc_attr( $wrapper_style ); ?>">
-					<header class="mrp-block-header">
-						<?php printf( '<%1$s class="mrp-block-heading" data-mrp-preview="sectionTitle">%2$s</%1$s>', esc_html( $heading_tag ), esc_html( $settings['sectionTitle'] ) ); ?>
-						<p class="mrp-block-subtitle" data-mrp-preview="sectionSubtitle"><?php echo esc_html( $settings['sectionSubtitle'] ? $settings['sectionSubtitle'] : __( 'Optional subtitle text can reinforce the section context.', 'manual-related-posts-pro' ) ); ?></p>
-					</header>
-					<div class="mrp-grid" role="list">
-						<?php for ( $index = 1; $index <= 4; $index++ ) : ?>
-							<article class="mrp-card is-clickable" role="listitem" data-mrp-preview-card="<?php echo esc_attr( (string) $index ); ?>">
-								<a class="mrp-card-link-overlay" href="#" aria-hidden="true" tabindex="-1"></a>
-								<div class="mrp-card-image" data-mrp-preview-image-wrap>
-									<img
-										src="https://picsum.photos/id/1060/1200/675"
-										alt="<?php esc_attr_e( 'Preview featured image', 'manual-related-posts-pro' ); ?>"
-										loading="eager"
-										decoding="async"
-										data-mrp-preview-image
-									/>
-								</div>
-								<div class="mrp-card-body">
-									<div class="mrp-card-meta" data-mrp-preview="metaWrap">
-										<time datetime="2026-03-31" data-mrp-preview="date"><?php esc_html_e( 'March 31, 2026', 'manual-related-posts-pro' ); ?></time>
-										<span data-mrp-preview="category"><?php esc_html_e( 'Guides', 'manual-related-posts-pro' ); ?></span>
-									</div>
-									<h3 class="mrp-card-title" data-mrp-preview="postTitle"><?php echo esc_html( sprintf( __( 'Example related post %d', 'manual-related-posts-pro' ), $index ) ); ?></h3>
-									<p class="mrp-card-excerpt" data-mrp-preview="excerpt"><?php esc_html_e( 'This preview card updates as you change typography, spacing, colors, image behavior and button settings in the global defaults.', 'manual-related-posts-pro' ); ?></p>
-									<div class="mrp-card-actions" data-mrp-preview="buttonWrap">
-										<a class="mrp-card-button" href="#" data-mrp-preview="buttonText"><?php echo esc_html( $settings['buttonText'] ); ?></a>
-									</div>
-								</div>
-							</article>
-						<?php endfor; ?>
-					</div>
-				</section>
-			</div>
 		</div>
 		<?php
 	}
@@ -303,6 +238,8 @@ class MRP_Settings {
 
 	private static function get_settings_fields() {
 		return array(
+			array( 'key' => 'autoRenderSeries', 'label' => __( 'Enable automatic series cards', 'manual-related-posts-pro' ), 'type' => 'checkbox', 'section' => 'mrp_section_series', 'description' => __( 'Automatically display other chapters in the series at the end of posts without requiring a manual block.', 'manual-related-posts-pro' ) ),
+			array( 'key' => 'seriesSectionTitle', 'label' => __( 'Default series section title', 'manual-related-posts-pro' ), 'type' => 'text', 'section' => 'mrp_section_series', 'description' => __( 'Title displayed above auto-rendered series episode cards.', 'manual-related-posts-pro' ) ),
 			array( 'key' => 'sectionTitle', 'label' => __( 'Default section title', 'manual-related-posts-pro' ), 'type' => 'text', 'section' => 'mrp_section_content', 'description' => __( 'Appears when a block does not define its own section title.', 'manual-related-posts-pro' ) ),
 			array( 'key' => 'sectionSubtitle', 'label' => __( 'Default section subtitle', 'manual-related-posts-pro' ), 'type' => 'text', 'section' => 'mrp_section_content', 'description' => __( 'Helpful for optional context beneath the main section heading.', 'manual-related-posts-pro' ) ),
 			array( 'key' => 'showDate', 'label' => __( 'Show date by default', 'manual-related-posts-pro' ), 'type' => 'checkbox', 'section' => 'mrp_section_meta', 'description' => __( 'Controls whether new blocks display the post date unless overridden.', 'manual-related-posts-pro' ) ),
@@ -355,6 +292,3 @@ class MRP_Settings {
 		);
 	}
 }
-
-
-

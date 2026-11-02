@@ -14,6 +14,14 @@ class MRP_Helpers {
 
 	public static function get_hardcoded_defaults() {
 		return array(
+			'mode'                  => 'classic',
+			'episodeNumber'         => '',
+			'seriesTitle'           => '',
+			'isReciprocal'          => false,
+			'autoRenderSeries'      => true,
+			'seriesSectionTitle'    => __( 'Episodes of this series', 'manual-related-posts-pro' ),
+			'autoRenderSpinoffs'    => true,
+			'spinoffSectionTitle'   => __( 'Related Content & Spin-offs', 'manual-related-posts-pro' ),
 			'sectionTitle'          => __( 'Related Posts', 'manual-related-posts-pro' ),
 			'sectionSubtitle'       => '',
 			'sectionTitleColor'     => '#111827',
@@ -68,6 +76,14 @@ class MRP_Helpers {
 
 	public static function get_setting_schema() {
 		return array(
+			'mode'                  => 'mode',
+			'episodeNumber'         => 'string',
+			'seriesTitle'           => 'string',
+			'isReciprocal'          => 'bool',
+			'autoRenderSeries'      => 'bool',
+			'seriesSectionTitle'    => 'string',
+			'autoRenderSpinoffs'    => 'bool',
+			'spinoffSectionTitle'   => 'string',
 			'sectionTitle'          => 'string',
 			'sectionSubtitle'       => 'string',
 			'sectionTitleColor'     => 'color',
@@ -276,6 +292,8 @@ class MRP_Helpers {
 
 	public static function sanitize_setting_value( $type, $value, $fallback ) {
 		switch ( $type ) {
+			case 'mode':
+				return in_array( $value, array( 'classic', 'series', 'spinoff' ), true ) ? $value : 'classic';
 			case 'string':
 				return sanitize_text_field( (string) $value );
 			case 'color':

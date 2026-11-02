@@ -2,8 +2,8 @@
 /**
  * Plugin Name: Manual Related Posts Pro
  * Plugin URI: https://juan.webmasterpersonal.com
- * Description: Adds a lightweight Gutenberg block for manually selected related posts with dynamic server-side rendering.
- * Version: 1.0.8
+ * Description: Adds a lightweight Gutenberg block for manually selected related posts, episode series groups, and spin-off relationships with dynamic server-side rendering.
+ * Version: 2.0.0
  * Requires at least: 6.4
  * Requires PHP: 7.4
  * Author: Juan Aguirre
@@ -19,17 +19,24 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'MRP_VERSION', '1.0.8' );
+define( 'MRP_VERSION', '2.0.0' );
 define( 'MRP_PLUGIN_FILE', __FILE__ );
 define( 'MRP_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'MRP_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
 require_once MRP_PLUGIN_DIR . 'includes/class-mrp-helpers.php';
+require_once MRP_PLUGIN_DIR . 'includes/class-mrp-cache.php';
+require_once MRP_PLUGIN_DIR . 'includes/class-mrp-series.php';
+require_once MRP_PLUGIN_DIR . 'includes/class-mrp-relationships.php';
+require_once MRP_PLUGIN_DIR . 'includes/class-mrp-auto-render.php';
 require_once MRP_PLUGIN_DIR . 'includes/class-mrp-render.php';
 require_once MRP_PLUGIN_DIR . 'includes/class-mrp-settings.php';
 require_once MRP_PLUGIN_DIR . 'includes/class-mrp-block.php';
 
 function mrp_boot_plugin() {
+	MRP_Series::init();
+	MRP_Relationships::init();
+	MRP_Auto_Render::init();
 	MRP_Settings::init();
 	MRP_Block::init();
 }
@@ -55,9 +62,3 @@ function mrp_add_plugin_action_links( $links ) {
 }
 
 add_filter( 'plugin_action_links_' . plugin_basename( MRP_PLUGIN_FILE ), 'mrp_add_plugin_action_links' );
-
-
-
-
-
-
