@@ -68,6 +68,9 @@ function register_post_meta( $post_type, $meta_key, $args ) { $GLOBALS['_wp_regi
 function register_block_type( $path, $args ) { $GLOBALS['_wp_registered_blocks'][$path] = $args; }
 
 function wp_set_object_terms( $post_id, $terms, $taxonomy, $append = false ) {
+    if ( ! empty( $GLOBALS['_wp_fail_terms'][$post_id] ) ) {
+        return new WP_Error( 'db_error', 'WordPress term assignment failure' );
+    }
     $term_id = is_array( $terms ) ? ( ! empty( $terms ) ? reset( $terms ) : null ) : $terms;
     if ( null === $term_id ) {
         $GLOBALS['_wp_term_relationships'][$post_id] = array();
@@ -82,6 +85,9 @@ function wp_set_object_terms( $post_id, $terms, $taxonomy, $append = false ) {
 }
 
 function wp_remove_object_terms( $post_id, $terms, $taxonomy ) {
+    if ( ! empty( $GLOBALS['_wp_fail_remove_terms'][$post_id] ) ) {
+        return new WP_Error( 'db_error', 'WordPress term removal failure' );
+    }
     $terms_to_rem = is_array( $terms ) ? $terms : array( $terms );
     $current = $GLOBALS['_wp_term_relationships'][$post_id] ?? array();
     $GLOBALS['_wp_term_relationships'][$post_id] = array_values( array_diff( $current, $terms_to_rem ) );
@@ -166,16 +172,71 @@ function is_admin() { return false; }
 function is_feed() { return false; }
 function wp_is_json_request() { return false; }
 function is_user_logged_in() { return true; }
+function get_current_user_id() { return $GLOBALS['_wp_current_user_id'] ?? 1; }
 function current_user_can( $cap, $post_id = 0 ) {
     if ( isset( $GLOBALS['_wp_current_user_caps'][$post_id] ) ) {
         return $GLOBALS['_wp_current_user_caps'][$post_id];
     }
+    if ( isset( $GLOBALS['_wp_current_user_caps'][$cap] ) ) {
+        return $GLOBALS['_wp_current_user_caps'][$cap];
+    }
     return true; // default allowed in tests unless specifically restricted
 }
+function set_transient( $key, $value, $exp = 0 ) { $GLOBALS['_wp_transients'][$key] = $value; return true; }
+function get_transient( $key ) { return $GLOBALS['_wp_transients'][$key] ?? false; }
+function delete_transient( $key ) { unset( $GLOBALS['_wp_transients'][$key] ); return true; }
+function wp_json_encode( $data ) { return json_encode( $data ); }
 function is_wp_error( $thing ) { return $thing instanceof WP_Error; }
 class WP_Error {
     public $message;
-    public function __construct( $code = '', $message = '' ) { $this->message = $message; }
+    public $code;
+    public function __construct( $code = '', $message = '' ) { $this->code = $code; $this->message = $message; }
+}
+
+if ( ! class_exists( 'WP_Query' ) ) {
+    class WP_Query {
+        public $posts = array();
+        public function __construct( $args = array() ) {
+            $matched = array();
+            $search = strtolower( trim( (string) ( $args['s'] ?? '' ) ) );
+            $post_status = $args['post_status'] ?? 'publish';
+            $author = $args['author'] ?? null;
+
+            foreach ( $GLOBALS['_wp_posts'] as $post ) {
+                // Status check
+                if ( is_array( $post_status ) ) {
+                    if ( ! in_array( $post->post_status, $post_status, true ) ) {
+                        continue;
+                    }
+                } elseif ( 'any' !== $post_status && $post->post_status !== $post_status ) {
+                    continue;
+                }
+
+                // Author check
+                if ( null !== $author && (int) ( $post->post_author ?? 1 ) !== (int) $author ) {
+                    continue;
+                }
+
+                // Search check
+                if ( '' !== $search ) {
+                    $in_title = false !== stripos( $post->post_title, $search );
+                    $in_content = false !== stripos( $post->post_content, $search );
+                    if ( ! $in_title && ! $in_content ) {
+                        continue;
+                    }
+                }
+
+                $matched[] = $post;
+            }
+
+            $limit = $args['posts_per_page'] ?? -1;
+            if ( $limit > 0 ) {
+                $matched = array_slice( $matched, 0, $limit );
+            }
+
+            $this->posts = $matched;
+        }
+    }
 }
 
 function get_posts( $args = array() ) {
@@ -307,12 +368,13 @@ require_once __DIR__ . '/../includes/class-mrp-render.php';
 require_once __DIR__ . '/../includes/class-mrp-block.php';
 
 // Helpers to create mock posts
-function create_mock_post( $id, $title, $status = 'publish', $content = '' ) {
+function create_mock_post( $id, $title, $status = 'publish', $content = '', $author = 1 ) {
     $p = (object) array(
         'ID'           => $id,
         'post_title'   => $title,
         'post_status'  => $status,
         'post_content' => $content,
+        'post_author'  => $author,
         'post_type'    => 'post',
         'post_date'    => '2026-04-01 10:00:00',
         'post_date_gmt'=> '2026-04-01 10:00:00',
@@ -737,6 +799,119 @@ $req_relink = new WP_REST_Request( array( 'ids' => array( 950 ), 'series_id' => 
 $res_relink = MRP_Block::handle_relink_series_endpoint( $req_relink );
 assert_true( $res_relink['success'], 'REST relink-series returned success' );
 assert_true( ! in_array( $series_term->term_id, MRP_Series::get_unlinked_series_ids( 950 ), true ), 'Post 950 unlinked flag cleared via REST relink' );
+
+// TEST 25: Fallo 1 - Reincorporation Permission Denial MUST NOT Erase Unlinked Flag
+echo "\nTest 25: Reincorporation Permission Denial Preserves Unlinked Flag (Fallo 1 Fix)\n";
+create_mock_post( 99, 'Capítulo 99 (Desvinculado)' );
+// Assign to series first, then unlink to establish unlinked flag
+MRP_Series::assign_post_to_series( 99, $series_term->term_id, '99' );
+MRP_Series::unlink_post_from_series( 99 );
+assert_true( in_array( $series_term->term_id, MRP_Series::get_unlinked_series_ids( 99 ), true ), 'Post 99 has unlinked flag before test' );
+
+// Deny permission on post 99
+$GLOBALS['_wp_current_user_caps'][99] = false;
+
+// Attempt to reincorporate post 99 with confirmation
+create_mock_post( 100, 'Capítulo 100' );
+$failed_relink = MRP_Series::sync_post_series( 100, array( 1, 99 ), '100', '', true );
+assert_true( ! $failed_relink['success'], 'Sync fails with permission_denied' );
+assert_equals( 'permission_denied', $failed_relink['error'], 'Error is permission_denied' );
+
+// CRUCIAL AUDIT CHECK: _mrp_unlinked_series MUST NOT have been erased!
+$unlinked_after = MRP_Series::get_unlinked_series_ids( 99 );
+assert_true( in_array( $series_term->term_id, $unlinked_after, true ), 'Audit Fallo 1 Fix: _mrp_unlinked_series was NOT erased when permission was denied' );
+
+// Restore permission on 99
+unset( $GLOBALS['_wp_current_user_caps'][99] );
+
+// TEST 26: Fallo 2 - WordPress Term Assignment Failure and Atomic Rollback
+echo "\nTest 26: WordPress Term Assignment Failure and Atomic Rollback (Fallo 2 Fix)\n";
+create_mock_post( 88, 'Capítulo 88' );
+create_mock_post( 89, 'Capítulo 89' );
+
+// Simulate WordPress failure on post 89
+$GLOBALS['_wp_fail_terms'][89] = true;
+
+$term_fail_sync = MRP_Series::sync_post_series( 88, array( 89 ), '88', 'Fail Series' );
+assert_true( ! $term_fail_sync['success'], 'Sync fails when WordPress rejects wp_set_object_terms' );
+assert_equals( 'term_assignment_failed', $term_fail_sync['error'], 'Error is term_assignment_failed' );
+assert_true( in_array( 89, $term_fail_sync['failed_post_ids'], true ), 'Post 89 is reported in failed_post_ids' );
+
+// Atomic rollback: verify Post 88 was NOT left assigned in DB!
+assert_equals( null, MRP_Series::get_post_series( 88 ), 'Audit Fallo 2 Fix: Post 88 was rolled back and not left assigned' );
+assert_equals( null, MRP_Series::get_post_series( 89 ), 'Post 89 was not assigned' );
+
+// Clear failure mock
+unset( $GLOBALS['_wp_fail_terms'][89] );
+
+// TEST 27: Error Handling on wp_remove_object_terms
+echo "\nTest 27: Error Handling on wp_remove_object_terms\n";
+create_mock_post( 77, 'Capítulo 77' );
+MRP_Series::assign_post_to_series( 77, $series_term->term_id, '77' );
+
+// Simulate WordPress removal failure on 77
+$GLOBALS['_wp_fail_remove_terms'][77] = true;
+$unlink_res = MRP_Series::unlink_post_from_series( 77 );
+assert_true( false === $unlink_res, 'unlink_post_from_series returns false on WordPress failure' );
+assert_true( null !== MRP_Series::get_post_series( 77 ), 'Post 77 remains in series when removal fails' );
+
+// Clear removal failure mock
+unset( $GLOBALS['_wp_fail_remove_terms'][77] );
+
+// TEST 28: Editor Error Communication via Meta & Transient
+echo "\nTest 28: Editor Error Communication via Meta & Transient\n";
+create_mock_post( 910, 'Save Fail Post' );
+// Deny permission on post 911
+create_mock_post( 911, 'Forbidden Post' );
+$GLOBALS['_wp_current_user_caps'][911] = false;
+
+$post_910_obj = $GLOBALS['_wp_posts'][910];
+$post_910_obj->post_content = '<!-- wp:manual-related-posts-pro/manual-related-posts {"mode":"series","selectedPosts":[911],"episodeNumber":"910"} /-->';
+MRP_Series::on_after_insert_post( 910, $post_910_obj, true );
+
+// Check meta _mrp_last_sync_status
+$meta_status_raw = get_post_meta( 910, MRP_Series::META_SYNC_STATUS, true );
+assert_true( ! empty( $meta_status_raw ), 'Post meta _mrp_last_sync_status is saved on failure' );
+$meta_status = json_decode( $meta_status_raw, true );
+assert_equals( 'permission_denied', $meta_status['error'], 'Meta recorded error code permission_denied' );
+
+// Check transient for admin notices
+$transient_status = get_transient( 'mrp_sync_error_910' );
+assert_true( ! empty( $transient_status ), 'Transient mrp_sync_error_910 is set for admin notices' );
+assert_equals( 'permission_denied', $transient_status['error'], 'Transient recorded error code' );
+
+// Check REST series-check endpoint passes lastSyncError
+$req_check_err = new WP_REST_Request( array( 'ids' => array( 1 ), 'postId' => 910 ) );
+$res_check_err = MRP_Block::handle_series_check_endpoint( $req_check_err );
+assert_true( ! empty( $res_check_err['lastSyncError'] ), 'REST series-check exposes lastSyncError to Gutenberg' );
+assert_equals( 'permission_denied', $res_check_err['lastSyncError']['error'], 'Gutenberg receives permission_denied error' );
+
+// Restore permission on 911
+unset( $GLOBALS['_wp_current_user_caps'][911] );
+
+// TEST 29: Multi-Author Post Search Security and Accessibility
+echo "\nTest 29: Multi-Author Post Search\n";
+// Create posts by Author B (user ID 20)
+create_mock_post( 1201, 'Capítulo Especial de Autor B', 'publish', '', 20 );
+create_mock_post( 1202, 'Borrador Privado de Autor B', 'draft', '', 20 );
+
+// Current user is Author A (user ID 10) who CANNOT edit others posts
+$GLOBALS['_wp_current_user_id'] = 10;
+$GLOBALS['_wp_current_user_caps']['edit_others_posts'] = false;
+create_mock_post( 1203, 'Mi Borrador Propio de Autor A', 'draft', '', 10 );
+
+// Search for 'Autor'
+$search_req = new WP_REST_Request( array( 'search' => 'Autor' ) );
+$search_res = MRP_Block::handle_posts_endpoint( $search_req );
+$found_ids = array_map( function( $p ) { return $p['id']; }, $search_res['results'] );
+
+assert_true( in_array( 1201, $found_ids, true ), 'Author A can find published post 1201 written by Author B' );
+assert_true( in_array( 1203, $found_ids, true ), 'Author A can find their own draft 1203' );
+assert_true( ! in_array( 1202, $found_ids, true ), 'Author A CANNOT see Author B private draft 1202' );
+
+// Reset user context
+unset( $GLOBALS['_wp_current_user_id'] );
+unset( $GLOBALS['_wp_current_user_caps']['edit_others_posts'] );
 
 // SUMMARY
 echo "\n=====================================\n";

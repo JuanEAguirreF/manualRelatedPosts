@@ -17,6 +17,7 @@ class MRP_Series {
 	const META_EPISODE          = '_mrp_episode_number';
 	const META_UNLINKED         = '_mrp_unlinked_series';
 	const META_HAS_SERIES_BLOCK = '_mrp_has_series_block';
+	const META_SYNC_STATUS      = '_mrp_last_sync_status';
 
 	/**
 	 * Guard against recursive execution during save hooks.
@@ -32,6 +33,9 @@ class MRP_Series {
 
 		// Hook save action after meta and terms are updated.
 		add_action( 'wp_after_insert_post', array( __CLASS__, 'on_after_insert_post' ), 20, 3 );
+
+		// Admin notices for sync errors.
+		add_action( 'admin_notices', array( __CLASS__, 'display_admin_sync_notices' ) );
 
 		// Status transitions & deletion invalidation.
 		add_action( 'transition_post_status', array( __CLASS__, 'on_transition_post_status' ), 20, 3 );
@@ -109,6 +113,20 @@ class MRP_Series {
 					'single'        => true,
 					'type'          => 'string',
 					'auth_callback' => static function ( $allowed, $meta_key, $post_id ) {
+						return current_user_can( 'edit_post', $post_id );
+					},
+				)
+			);
+
+			register_post_meta(
+				$pt,
+				self::META_SYNC_STATUS,
+				array(
+					'show_in_rest'      => true,
+					'single'            => true,
+					'type'              => 'string',
+					'sanitize_callback' => 'sanitize_text_field',
+					'auth_callback'     => static function ( $allowed, $meta_key, $post_id ) {
 						return current_user_can( 'edit_post', $post_id );
 					},
 				)
@@ -299,10 +317,13 @@ class MRP_Series {
 			return false;
 		}
 
-		// Enforce single series membership per post.
-		wp_set_object_terms( $post_id, array( $term_id ), self::TAXONOMY, false );
+		// Enforce single series membership per post and strictly verify WordPress term assignment result.
+		$term_result = wp_set_object_terms( $post_id, array( $term_id ), self::TAXONOMY, false );
+		if ( is_wp_error( $term_result ) || empty( $term_result ) ) {
+			return false;
+		}
 
-		// Clear unlinked flag for this series term since it's now intentionally assigned.
+		// Clear unlinked flag for this series term ONLY after wp_set_object_terms succeeded!
 		self::clear_unlinked_series_flag( $post_id, $term_id );
 
 		if ( null !== $episode_number && '' !== $episode_number ) {
@@ -336,11 +357,15 @@ class MRP_Series {
 			return false;
 		}
 
-		// Remove series taxonomy relationship.
+		// Remove series taxonomy relationship and verify WordPress result.
 		if ( function_exists( 'wp_remove_object_terms' ) ) {
-			wp_remove_object_terms( $post_id, $term_id, self::TAXONOMY );
+			$rem_result = wp_remove_object_terms( $post_id, $term_id, self::TAXONOMY );
 		} elseif ( function_exists( 'wp_set_object_terms' ) ) {
-			wp_set_object_terms( $post_id, array(), self::TAXONOMY, false );
+			$rem_result = wp_set_object_terms( $post_id, array(), self::TAXONOMY, false );
+		}
+
+		if ( is_wp_error( $rem_result ) ) {
+			return false;
 		}
 
 		// Clear episode number and series block tracking flag.
@@ -448,6 +473,31 @@ class MRP_Series {
 
 		$target_term_id = ! empty( $all_series_ids ) ? (int) $all_series_ids[0] : 0;
 
+		// Target posts to assign: current post + selected posts.
+		$posts_to_assign = array_values( array_unique( array_merge( array( $post_id ), $selected_ids ) ) );
+
+		// ATOMIC PERMISSION VALIDATION:
+		// Check edit permission for ALL affected posts BEFORE modifying ANY post, term, or metadata!
+		// If ANY post cannot be edited, reject immediately with zero side-effects.
+		if ( function_exists( 'is_user_logged_in' ) && is_user_logged_in() && function_exists( 'current_user_can' ) ) {
+			foreach ( $posts_to_assign as $pid ) {
+				if ( ! current_user_can( 'edit_post', $pid ) ) {
+					self::$is_syncing = false;
+					return array(
+						'success'      => false,
+						'series_id'    => 0,
+						'affected_ids' => array(),
+						'conflict'     => false,
+						'error'        => 'permission_denied',
+						'message'      => sprintf(
+							__( 'Permiso denegado: no tienes autorización para modificar las relaciones del capítulo ID %d.', 'manual-related-posts-pro' ),
+							$pid
+						),
+					);
+				}
+			}
+		}
+
 		// Persistent Unlinking Safeguard:
 		// Check if the current post or any selected post was previously unlinked from this target series!
 		if ( $target_term_id ) {
@@ -462,48 +512,21 @@ class MRP_Series {
 			}
 			$unlinked_found = array_values( array_unique( $unlinked_found ) );
 
-			if ( ! empty( $unlinked_found ) ) {
-				if ( ! $relink_confirmed ) {
-					// NEVER return success: true when unlinked posts are omitted or requested without confirmation!
-					self::$is_syncing = false;
-					return array(
-						'success'           => false,
-						'series_id'         => $target_term_id,
-						'affected_ids'      => array(),
-						'conflict'          => false,
-						'error'             => 'unlinked_posts_detected',
-						'unlinked_post_ids' => $unlinked_found,
-						'message'           => sprintf(
-							__( 'Uno o más capítulos (%s) fueron desvinculados previamente de esta serie. Se requiere confirmación explícita para reincorporarlos.', 'manual-related-posts-pro' ),
-							implode( ', ', $unlinked_found )
-						),
-					);
-				}
-
-				// Explicit confirmation provided: clear unlinked flags so they are cleanly reincorporated.
-				foreach ( $unlinked_found as $uid ) {
-					self::clear_unlinked_series_flag( $uid, $target_term_id );
-				}
-			}
-		}
-
-		// Target posts to assign: current post + selected posts.
-		$posts_to_assign = array_values( array_unique( array_merge( array( $post_id ), $selected_ids ) ) );
-
-		// ATOMIC PERMISSION VALIDATION:
-		// Before modifying ANY post, verify current user has edit permission for ALL affected posts!
-		if ( function_exists( 'is_user_logged_in' ) && is_user_logged_in() && function_exists( 'current_user_can' ) ) {
-			foreach ( $posts_to_assign as $pid ) {
-				if ( ! current_user_can( 'edit_post', $pid ) ) {
-					self::$is_syncing = false;
-					return array(
-						'success'      => false,
-						'series_id'    => 0,
-						'affected_ids' => array(),
-						'conflict'     => false,
-						'error'        => 'permission_denied',
-					);
-				}
+			if ( ! empty( $unlinked_found ) && ! $relink_confirmed ) {
+				// NEVER return success: true when unlinked posts are omitted or requested without confirmation!
+				self::$is_syncing = false;
+				return array(
+					'success'           => false,
+					'series_id'         => $target_term_id,
+					'affected_ids'      => array(),
+					'conflict'          => false,
+					'error'             => 'unlinked_posts_detected',
+					'unlinked_post_ids' => $unlinked_found,
+					'message'           => sprintf(
+						__( 'Uno o más capítulos (%s) fueron desvinculados previamente de esta serie. Se requiere confirmación explícita para reincorporarlos.', 'manual-related-posts-pro' ),
+						implode( ', ', $unlinked_found )
+					),
+				);
 			}
 		}
 
@@ -519,12 +542,18 @@ class MRP_Series {
 					'affected_ids' => array(),
 					'conflict'     => false,
 					'error'        => 'term_creation_failed',
+					'message'      => __( 'Error al registrar el grupo de serie en WordPress.', 'manual-related-posts-pro' ),
 				);
 			}
 			$target_term_id = (int) $created;
 		}
 
-		$affected_ids = array();
+		// Record existing members before assignment to enable atomic rollback if any assignment fails.
+		$previous_members    = self::get_series_posts( $target_term_id );
+		$previous_member_ids = array_map( static function ( $p ) { return (int) $p->ID; }, $previous_members );
+
+		$assigned_ids = array();
+		$failed_ids   = array();
 
 		foreach ( $posts_to_assign as $index => $pid ) {
 			$post_ep = ( $pid === $post_id ) ? $episode_number : null;
@@ -538,8 +567,44 @@ class MRP_Series {
 				}
 			}
 
-			self::assign_post_to_series( $pid, $target_term_id, $post_ep );
-			$affected_ids[] = $pid;
+			$assigned = self::assign_post_to_series( $pid, $target_term_id, $post_ep );
+			if ( ! $assigned ) {
+				$failed_ids[] = $pid;
+			} else {
+				$assigned_ids[] = $pid;
+			}
+		}
+
+		// Check for WordPress assignment errors.
+		if ( ! empty( $failed_ids ) ) {
+			// Rollback: unassign any posts that were newly assigned in this batch to prevent corrupt partial states.
+			foreach ( $assigned_ids as $aid ) {
+				if ( ! in_array( $aid, $previous_member_ids, true ) ) {
+					if ( function_exists( 'wp_remove_object_terms' ) ) {
+						wp_remove_object_terms( $aid, $target_term_id, self::TAXONOMY );
+					} elseif ( function_exists( 'wp_set_object_terms' ) ) {
+						wp_set_object_terms( $aid, array(), self::TAXONOMY, false );
+					}
+					// Restore unlinked flag if it was an unlinked post that was partially modified
+					if ( isset( $unlinked_found ) && in_array( $aid, $unlinked_found, true ) ) {
+						self::add_unlinked_series_flag( $aid, $target_term_id );
+					}
+				}
+			}
+
+			self::$is_syncing = false;
+			return array(
+				'success'         => false,
+				'series_id'       => $target_term_id,
+				'affected_ids'    => array(),
+				'conflict'        => false,
+				'error'           => 'term_assignment_failed',
+				'failed_post_ids' => $failed_ids,
+				'message'         => sprintf(
+					__( 'Error al vincular los capítulos a la serie en WordPress (IDs: %s). La operación fue cancelada para preservar la integridad de datos.', 'manual-related-posts-pro' ),
+					implode( ', ', $failed_ids )
+				),
+			);
 		}
 
 		// Ensure the post holding the series block tracks this state.
@@ -548,10 +613,10 @@ class MRP_Series {
 		// Also get any previous members of this series to ensure their cache is purged.
 		$existing_members = self::get_series_posts( $target_term_id );
 		foreach ( $existing_members as $m ) {
-			$affected_ids[] = (int) $m->ID;
+			$assigned_ids[] = (int) $m->ID;
 		}
 
-		$affected_ids = array_values( array_unique( $affected_ids ) );
+		$affected_ids = array_values( array_unique( $assigned_ids ) );
 
 		// Invalidate internal WordPress data cache and trigger public hook.
 		MRP_Cache::invalidate_posts( $affected_ids );
@@ -564,6 +629,7 @@ class MRP_Series {
 			'affected_ids' => $affected_ids,
 			'conflict'     => false,
 			'error'        => '',
+			'message'      => __( 'Serie sincronizada correctamente.', 'manual-related-posts-pro' ),
 		);
 	}
 
@@ -626,13 +692,28 @@ class MRP_Series {
 			$series_title     = isset( $series_block_data['seriesTitle'] ) ? sanitize_text_field( (string) $series_block_data['seriesTitle'] ) : '';
 			$relink_confirmed = ! empty( $series_block_data['relinkConfirmed'] );
 
-			self::sync_post_series( $post_id, $selected_ids, $episode_number, $series_title, $relink_confirmed );
+			$sync_result = self::sync_post_series( $post_id, $selected_ids, $episode_number, $series_title, $relink_confirmed );
+
+			if ( ! $sync_result['success'] ) {
+				// Record error status in post meta (accessible by REST API / Gutenberg) and transient (for admin notices).
+				update_post_meta( $post_id, self::META_SYNC_STATUS, wp_json_encode( $sync_result ) );
+				if ( function_exists( 'set_transient' ) ) {
+					set_transient( 'mrp_sync_error_' . $post_id, $sync_result, 120 );
+				}
+			} else {
+				// Clear any previous error on success.
+				delete_post_meta( $post_id, self::META_SYNC_STATUS );
+				if ( function_exists( 'delete_transient' ) ) {
+					delete_transient( 'mrp_sync_error_' . $post_id );
+				}
+			}
 		} else {
 			// Current post does NOT have a series block in content now.
 			if ( $had_series_block ) {
 				// The editor previously inserted a series block and has now explicitly removed it or changed mode.
 				self::unlink_post_from_series( $post_id );
 				delete_post_meta( $post_id, self::META_HAS_SERIES_BLOCK );
+				delete_post_meta( $post_id, self::META_SYNC_STATUS );
 			}
 			// If $had_series_block was false, this post never had its own series block.
 			// It was auto-linked to a series by another chapter, and may contain classic or spinoff blocks.
@@ -719,5 +800,31 @@ class MRP_Series {
 		$ids[] = absint( $post_id );
 
 		MRP_Cache::invalidate_posts( $ids );
+	}
+
+	/**
+	 * Display admin notice in post editor if synchronization failed.
+	 */
+	public static function display_admin_sync_notices() {
+		global $post;
+		if ( ! $post || empty( $post->ID ) ) {
+			return;
+		}
+
+		$transient_key = 'mrp_sync_error_' . $post->ID;
+		$error_data    = function_exists( 'get_transient' ) ? get_transient( $transient_key ) : null;
+		if ( ! $error_data || empty( $error_data['message'] ) ) {
+			return;
+		}
+
+		if ( function_exists( 'delete_transient' ) ) {
+			delete_transient( $transient_key );
+		}
+
+		printf(
+			'<div class="notice notice-error is-dismissible"><p><strong>%s:</strong> %s</p></div>',
+			esc_html__( 'Manual Related Posts - Error al sincronizar serie', 'manual-related-posts-pro' ),
+			esc_html( $error_data['message'] )
+		);
 	}
 }

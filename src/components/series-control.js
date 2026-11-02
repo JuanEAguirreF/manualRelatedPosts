@@ -19,7 +19,15 @@ export default function SeriesControl( {
 	const [ seriesInfo, setSeriesInfo ] = useState( null );
 	const [ isChecking, setIsChecking ] = useState( false );
 	const [ isUnlinking, setIsUnlinking ] = useState( false );
+	const [ isRelinking, setIsRelinking ] = useState( false );
 	const [ unlinkMessage, setUnlinkMessage ] = useState( '' );
+
+	// Single-use confirmation safeguard: reset relinkConfirmed whenever selection or mode changes!
+	useEffect( () => {
+		if ( relinkConfirmed ) {
+			setAttributes( { relinkConfirmed: false } );
+		}
+	}, [ JSON.stringify( selectedPosts ), mode ] );
 
 	useEffect( () => {
 		if ( mode !== 'series' || ! selectedPosts.length || ! seriesCheckUrl ) {
@@ -44,6 +52,45 @@ export default function SeriesControl( {
 				setIsChecking( false );
 			} );
 	}, [ mode, JSON.stringify( selectedPosts ), seriesCheckUrl, nonce, postId ] );
+
+	const handleRelink = () => {
+		if ( ! relinkSeriesUrl || ! seriesInfo || ! seriesInfo.seriesList || ! seriesInfo.seriesList[0] ) {
+			setAttributes( { relinkConfirmed: true } );
+			return;
+		}
+
+		setIsRelinking( true );
+		const unlinkedIds = ( seriesInfo.unlinkedPosts || [] ).map( ( p ) => p.id );
+
+		apiFetch( {
+			url: relinkSeriesUrl,
+			method: 'POST',
+			headers: { 'X-WP-Nonce': nonce },
+			data: {
+				ids: unlinkedIds,
+				series_id: seriesInfo.seriesList[0].id,
+			},
+		} )
+			.then( () => {
+				setAttributes( { relinkConfirmed: true } );
+				// Refresh series detection so unlinked warning clears cleanly
+				setIsChecking( true );
+				apiFetch( {
+					url: seriesCheckUrl,
+					method: 'POST',
+					headers: { 'X-WP-Nonce': nonce },
+					data: { ids: selectedPosts, postId: postId },
+				} )
+					.then( ( data ) => setSeriesInfo( data ) )
+					.finally( () => setIsChecking( false ) );
+			} )
+			.catch( () => {
+				setAttributes( { relinkConfirmed: true } );
+			} )
+			.finally( () => {
+				setIsRelinking( false );
+			} );
+	};
 
 	const handleUnlink = () => {
 		if ( ! unlinkSeriesUrl || ! postId ) {
@@ -100,6 +147,13 @@ export default function SeriesControl( {
 		mode === 'series' && el(
 			'div',
 			{ className: 'mrp-series-settings' },
+			seriesInfo && seriesInfo.lastSyncError && el(
+				Notice,
+				{ status: 'error', isDismissible: true },
+				el( 'strong', null, __( 'Error al sincronizar la serie:', 'manual-related-posts-pro' ) ),
+				el( 'p', { style: { margin: '4px 0 0 0' } }, seriesInfo.lastSyncError.message || seriesInfo.lastSyncError.error )
+			),
+
 			isChecking && el( Notice, { status: 'info', isDismissible: false }, __( 'Checking series membership...', 'manual-related-posts-pro' ) ),
 
 			seriesInfo && seriesInfo.detected && ! seriesInfo.hasConflict && el(
@@ -137,10 +191,10 @@ export default function SeriesControl( {
 					{
 						variant: 'primary',
 						isSmall: true,
+						isBusy: isRelinking,
+						disabled: isRelinking,
 						style: { marginTop: '8px' },
-						onClick: () => {
-							setAttributes( { relinkConfirmed: true } );
-						},
+						onClick: handleRelink,
 					},
 					__( 'Reincorporar a la serie', 'manual-related-posts-pro' )
 				)

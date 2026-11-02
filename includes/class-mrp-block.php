@@ -162,27 +162,68 @@ class MRP_Block {
 			: array( 'publish' );
 
 		if ( '' !== $search ) {
-			$query_args = array(
-				'post_type'              => MRP_Helpers::get_allowed_post_types(),
-				's'                      => $search,
-				'posts_per_page'         => 10,
-				'post_status'            => $allowed_statuses,
-				'no_found_rows'          => true,
-				'ignore_sticky_posts'    => true,
-				'update_post_meta_cache' => true,
-				'update_post_term_cache' => true,
-			);
+			if ( $can_edit_others ) {
+				// Editors & Admins: search all allowed statuses without author restriction.
+				$query = new WP_Query(
+					array(
+						'post_type'              => MRP_Helpers::get_allowed_post_types(),
+						's'                      => $search,
+						'posts_per_page'         => 10,
+						'post_status'            => array( 'publish', 'draft', 'pending', 'future', 'private' ),
+						'no_found_rows'          => true,
+						'ignore_sticky_posts'    => true,
+						'update_post_meta_cache' => true,
+						'update_post_term_cache' => true,
+					)
+				);
 
-			// If author without edit_others_posts, also include their own drafts.
-			if ( ! $can_edit_others && is_user_logged_in() ) {
-				$query_args['author'] = get_current_user_id();
-				$query_args['post_status'] = array( 'publish', 'draft', 'pending' );
-			}
+				foreach ( $query->posts as $post ) {
+					$results[] = self::prepare_post_response_item( $post );
+				}
+			} else {
+				// Authors & Contributors without edit_others_posts:
+				// 1. Search all published posts by ANY author.
+				$query_published = new WP_Query(
+					array(
+						'post_type'              => MRP_Helpers::get_allowed_post_types(),
+						's'                      => $search,
+						'posts_per_page'         => 10,
+						'post_status'            => 'publish',
+						'no_found_rows'          => true,
+						'ignore_sticky_posts'    => true,
+						'update_post_meta_cache' => true,
+						'update_post_term_cache' => true,
+					)
+				);
 
-			$query = new WP_Query( $query_args );
+				$found_map = array();
+				foreach ( $query_published->posts as $post ) {
+					$found_map[ $post->ID ] = self::prepare_post_response_item( $post );
+				}
 
-			foreach ( $query->posts as $post ) {
-				$results[] = self::prepare_post_response_item( $post );
+				// 2. Also search the author's own drafts or pending posts (if logged in).
+				if ( is_user_logged_in() ) {
+					$query_own = new WP_Query(
+						array(
+							'post_type'              => MRP_Helpers::get_allowed_post_types(),
+							's'                      => $search,
+							'author'                 => get_current_user_id(),
+							'posts_per_page'         => 10,
+							'post_status'            => array( 'draft', 'pending' ),
+							'no_found_rows'          => true,
+							'ignore_sticky_posts'    => true,
+							'update_post_meta_cache' => true,
+							'update_post_term_cache' => true,
+						)
+					);
+					foreach ( $query_own->posts as $post ) {
+						if ( ! isset( $found_map[ $post->ID ] ) ) {
+							$found_map[ $post->ID ] = self::prepare_post_response_item( $post );
+						}
+					}
+				}
+
+				$results = array_values( array_slice( $found_map, 0, 10 ) );
 			}
 		}
 
@@ -288,6 +329,17 @@ class MRP_Block {
 			}
 		}
 
+		$last_sync_error = null;
+		if ( $current_post_id ) {
+			$raw_status = get_post_meta( $current_post_id, MRP_Series::META_SYNC_STATUS, true );
+			if ( ! empty( $raw_status ) ) {
+				$decoded = json_decode( $raw_status, true );
+				if ( is_array( $decoded ) && empty( $decoded['success'] ) ) {
+					$last_sync_error = $decoded;
+				}
+			}
+		}
+
 		return rest_ensure_response(
 			array(
 				'detected'      => ! empty( $series_list ),
@@ -295,6 +347,7 @@ class MRP_Block {
 				'hasConflict'   => $has_conflict,
 				'members'       => $members,
 				'unlinkedPosts' => $unlinked_posts,
+				'lastSyncError' => $last_sync_error,
 			)
 		);
 	}
